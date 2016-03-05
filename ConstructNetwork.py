@@ -280,7 +280,7 @@ def get_gsm_network_node_property(time_scale):
 
     conn.close()
 
-get_gsm_network_node_property(30)
+# get_gsm_network_node_property(30)
 
 # get_sms_network_node_property(24)
 # analyse_network_property(as_window_size_arr)

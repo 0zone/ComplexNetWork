@@ -7,7 +7,7 @@ import networkx as nx                   #导入networkx包
 import matplotlib.pyplot as plt     #导入绘图包matplotlib（需要安装，方法见第一篇笔记）
 import MySQLdb
 
-
+current_path = "D:\\ComplexNetwork"
 GG = nx.Graph()
 GG.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
 # GG.add_weighted_edges_from([ (1,2,4)])
@@ -139,3 +139,14 @@ def aba_gsm_txt2db(file_name):
     print len(num_set)
 
 # aba_gsm_txt2db("D:\\数据集\\阿坝\\bf_gsm_call_t_all\\bf_gsm_call_t_all.txt")
+
+conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
+cur = conn.cursor()
+reslut_file_name = current_path + "\\result\\num.txt"
+file = open(reslut_file_name, 'w')
+
+sql_select = 'SELECT DISTINCT num FROM aba_gsm_30d'
+cur.execute(sql_select)
+result_data = cur.fetchall()
+for row in result_data:
+    file.write(row[0] + '\n')
