@@ -53,5 +53,4 @@ def get_gsm_network_property(time_scale):
 # get_gsm_network_property(70)
 
 for time_scale in range(14, 30):
-    print time_scale
     get_gsm_network_property(time_scale)

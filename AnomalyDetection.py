@@ -111,7 +111,7 @@ def get_aba_gsm_node_feature(time_scale, num, slice_size):
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
     cur = conn.cursor()
 
-    sql_select = 'SELECT * FROM ' + table_name + ' WHERE num = %s and date_index<%s'
+    sql_select = 'SELECT * FROM ' + table_name + ' WHERE num = %s and date_index<=%s'
     cur.execute(sql_select, (num, slice_size))
     result_data = cur.fetchall()
     # ÌØÕ÷¾ØÕó
