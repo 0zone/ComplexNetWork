@@ -15,6 +15,7 @@ as_table_name = 'as733'
 
 aba_delimiter = ','
 aba_begin_date = datetime.datetime(2009, 12, 31)
+aba_max_date_index = 530
 aba_data_path = "/Users/jinyu/paper/data/aba/bf_gsm_call_t_all/bf_gsm_call_t_all.txt"
 
 aba_gsm_data_path = "D:\\Êý¾Ý¼¯\\°¢°Ó\\bf_gsm_call_t_all\\bf_gsm_call_t_all.txt"
@@ -80,6 +81,8 @@ def aba_gsm_txt2db(file_name):
         from_num = data[0]
         to_num = data[9]
         if not to_num.isdigit():
+            continue
+        if date_index > aba_max_date_index:
             continue
 
         rows.append((from_num, to_num, date_index, date_time.strftime("%Y%m%d")))

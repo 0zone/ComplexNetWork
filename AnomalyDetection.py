@@ -7,10 +7,17 @@ import time
 import networkx as nx
 import matplotlib.pyplot as plt
 import MySQLdb
+import os
 
 
+# 1d last 530
+# 7d last 75
+# 30d last 17
+aba_gsm_days = 530
 feature_num = 5
 plot_style = ['b', 'r', 'ro', 'bs', 'c^', 'gp', 'mh', 'y2', 'k.']   # 点
+
+current_path = "D:\\ComplexNetwork"
 
 
 def normalization_matrix(m):
@@ -24,7 +31,7 @@ def normalization_matrix(m):
     return m
 
 
-#余弦相似度
+# 余弦相似度
 def cos_similar(feature_1, feature_2):
     feature_1 = np.mat(feature_1)
     feature_2 = np.mat(feature_2)
@@ -35,16 +42,80 @@ def cos_similar(feature_1, feature_2):
     return 1-(num/denom)
 
 
-def get_aba_gsm_node_feature(time_scale, num, days):
+def aba_gsm_node_anomaly_detection_best_threhold(time_scale, num, slice_size, window_size, decay):
+    similar_score = np.zeros((slice_size))
+    ab_line = np.zeros((slice_size+5)) + 0.5
+    node_feature = get_aba_gsm_node_feature(time_scale, num, slice_size)
+    normalization_feature = normalization_matrix(node_feature)
+
+    begin_date = 0
+    end_date = normalization_feature.shape[0]
+    for cur_date in range(begin_date, end_date):
+        cur_feature = normalization_feature[cur_date]
+
+        # for i in range(1, min(cur_date, window_size + 1)):
+        #     pre_feature += normalization_feature[cur_date - i] * pow(decay, i)
+        # pre_feature /= window_size
+        # similar = cos_similar(pre_feature, cur_feature)
+        if cur_date == begin_date:
+            continue
+        similar = 0.0
+        windows_cnt = 0
+        for i in range(1, min(cur_date + 1, window_size + 1)):
+            similar += cos_similar(normalization_feature[cur_date - i], cur_feature) * pow(decay, i)
+            windows_cnt += 1
+        similar /= windows_cnt
+        similar_score[cur_date] = similar
+
+    return similar_score[slice_size-1]
+
+
+def get_best_threhold(time_scale, slice_size, window_size, decay):
+    table_name = 'aba_gsm_' + str(time_scale) + 'd'
+
+    best_thres_hold_file_name = current_path + "\\result\\best_threshold\\gsm_" + str(time_scale) + "_" + str(slice_size) + ".txt"
+    best_thres_hold_file = open(best_thres_hold_file_name, 'w')
+    node_anomaly_score_file_name = current_path + "\\result\\node_anomaly_score\\gsm_" + str(time_scale) + "_" + str(slice_size) + ".txt"
+    node_anomaly_score_file = open(node_anomaly_score_file_name, 'w')
+
+    conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
+    cur = conn.cursor()
+
+
+    sql_select = 'SELECT * FROM ' + table_name + ' WHERE date_index=%s'
+    cur.execute(sql_select, slice_size)
+    result_data = cur.fetchall()
+
+    cnt = 0
+    threhold_count = np.zeros((1000))
+    for row in result_data:
+        res = aba_gsm_node_anomaly_detection_best_threhold(time_scale, row[1], slice_size, window_size, decay)
+        node_anomaly_score_file.write(row[1] + '    ' + str(res) + '\n')
+        res *= 1000
+        threhold_count[:int(res)] += 1
+        cnt += 1
+        print cnt
+
+    cur.close()
+    conn.commit()
+    conn.close()
+
+    for threhold in threhold_count:
+        best_thres_hold_file.write(str(threhold) + '\n')
+    best_thres_hold_file.close()
+    node_anomaly_score_file.close()
+
+
+def get_aba_gsm_node_feature(time_scale, num, slice_size):
     table_name = 'aba_gsm_' + str(time_scale) + 'd'
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
     cur = conn.cursor()
 
-    sql_select = 'SELECT * FROM ' + table_name + ' WHERE num = %s'
-    cur.execute(sql_select, num)
+    sql_select = 'SELECT * FROM ' + table_name + ' WHERE num = %s and date_index<%s'
+    cur.execute(sql_select, (num, slice_size))
     result_data = cur.fetchall()
     # 特征矩阵
-    node_feature = np.zeros((days, feature_num))
+    node_feature = np.zeros((slice_size, feature_num))
     for row in result_data:
         r_num = row[5] - 1
         node_feature[r_num][0] = row[2]             # 出度
@@ -61,42 +132,87 @@ def get_aba_gsm_node_feature(time_scale, num, days):
     return node_feature
 
 
-def aba_gsm_node_anomaly_detection(time_scale, num, days, window_size):
-    similar_score = np.zeros((days))
-    ab_line = np.zeros((days+5)) + 0.5
-    node_feature = get_aba_gsm_node_feature(time_scale, num, days)
+def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, decay, threshold):
+    similar_score = np.zeros((slice_size))
+    ab_line = np.zeros((slice_size+5)) + 0.25
+    node_feature = get_aba_gsm_node_feature(time_scale, num, slice_size)
     normalization_feature = normalization_matrix(node_feature)
 
-    begin_date = window_size
+    begin_date = 0
     end_date = normalization_feature.shape[0]
     for cur_date in range(begin_date, end_date):
         cur_feature = normalization_feature[cur_date]
-        pre_feature = np.zeros((feature_num))
-        for i in range(1, window_size + 1):
-            pre_feature += normalization_feature[cur_date - i]
-        # print pre_feature
-        # print cur_feature
-        similar = cos_similar(pre_feature, cur_feature)
-        similar_score[cur_date] = similar
-    print '111'
-    print similar_score
-    mean_val = np.mean(similar_score)
-    var_val = np.var(similar_score)
-    print mean_val, var_val
-    cnt = 0
-    for i in range(0, days):
-        if similar_score[i] > 0.5:
-            cnt += 1
-            print i
-            print similar_score[i]
-    print cnt
 
-    plt.plot(range(days), similar_score, plot_style[0])
-    plt.plot(range(days+5), ab_line, plot_style[1])
+        # for i in range(0, min(cur_date + 1, window_size + 1)):
+        #     pre_feature += normalization_feature[cur_date - i] * pow(decay, i)
+        # pre_feature /= window_size
+        # similar = cos_similar(pre_feature, cur_feature)
+
+        if cur_date == begin_date:
+            continue
+        similar = 0.0
+        windows_cnt = 0
+        for i in range(1, min(cur_date + 1, window_size + 1)):
+            similar += cos_similar(normalization_feature[cur_date - i], cur_feature) * pow(decay, i)
+            windows_cnt += 1
+        similar /= windows_cnt
+        similar_score[cur_date] = similar
+
+    # return similar_score
+    ###############
+    # if similar_score[slice_size-1] > threshold:
+    #     return True
+    # cnt = 0
+    # for i in range(0, slice_size):
+    #     if similar_score[i] > threshold:
+    #         cnt += 1
+    #         print i
+    #         print similar_score[i]
+    # print cnt
+    #
+    plt.plot(range(slice_size), similar_score, plot_style[2])
+    plt.plot(range(slice_size+5), ab_line, plot_style[1])
     plt.show()
 
-# aba_gsm_node_anomaly_detection(7, '13158418421', 82, 5)
-# aba_gsm_node_anomaly_detection(7, '13154407822', 82, 5) #周期性
-aba_gsm_node_anomaly_detection(7, '13086538278', 82, 5) #周期性
+
+def get_anomaly_node(time_scale, slice_size, window_size, decay, threshold):
+    table_name = 'aba_gsm_' + str(time_scale) + 'd'
+
+    conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
+    cur = conn.cursor()
+    reslut_file_name = current_path + "\\result\\anomaly_node\\gsm_" + str(time_scale) + "_" + str(slice_size) + ".txt"
+    file = open(reslut_file_name, 'w')
+
+    sql_select = 'SELECT * FROM ' + table_name + ' WHERE date_index=%s'
+    cur.execute(sql_select, slice_size)
+    result_data = cur.fetchall()
+
+    cnt = 0
+    for row in result_data:
+        if aba_gsm_node_anomaly_detection(time_scale, row[1], slice_size, window_size, decay, threshold):
+            print row[1]
+            file.write(row[1] + '\n')
+        cnt += 1
+        print cnt
+
+    file.close()
+    cur.close()
+    conn.commit()
+    conn.close()
 
 
+
+# get_best_threhold(7, 6, 5, 0.8)
+# get_best_threhold(7, 10, 5, 0.8)
+# get_best_threhold(7, 20, 5, 0.8)
+
+# 找到7_6下大于0.25的点
+# get_anomaly_node(7, 6, 5, 0.8, 0.25)
+# get_best_threhold(30, 6, 5, 0.8)
+# time_scale, num, slice_size, window_size, decay, threshold
+
+# node_file_name = current_path + "\\result\\anomaly_node\\gsm_7_6.txt"
+# node_file = open(node_file_name, 'r')
+# for line in node_file:
+#     aba_gsm_node_anomaly_detection(7, line.strip(), 76, 5, 0.8, 0.25)
+aba_gsm_node_anomaly_detection(7, '13551485833', 76, 5, 0.8, 0.25)

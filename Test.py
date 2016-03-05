@@ -2,41 +2,31 @@
 __author__ = 'yu'
 
 import time
+import datetime
 import networkx as nx                   #导入networkx包
 import matplotlib.pyplot as plt     #导入绘图包matplotlib（需要安装，方法见第一篇笔记）
 import MySQLdb
 
-# GG = nx.Graph()
-# MG=nx.MultiGraph()
-# MG.add_weighted_edges_from([(130865333321308000001,2,.5), (1,2,.75), (2,3,.9), (1,4,0.5), (4,3,0.2)])
-# print MG.degree(weight='weight')
-# print MG.edges()
-G = nx.MultiDiGraph()
-
-G.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1)])
-# print G.degree()
-in_degree = G.in_degree(weight='weight')
-out_degree = G.out_degree(weight='weight')
 
 GG = nx.Graph()
-for n, nbrs in G.adjacency_iter():
-    for nbr, edict in nbrs.items():
-        sum_value = sum([d['weight'] for d in edict.values()])
-        if not GG.has_edge(n, nbr):
-            GG.add_edge(n, nbr, weight=sum_value)
-        else:
-            GG.add_edge(n, nbr, weight=sum_value + GG.get_edge_data(n, nbr)['weight'])
+GG.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
+# GG.add_weighted_edges_from([ (1,2,4)])
+print float(sum(GG.degree(weight='weight').values()))/GG.number_of_nodes()
+print nx.average_clustering(GG)
+print nx.number_connected_components(GG)
+print nx.density(GG)
+print nx.degree_assortativity_coefficient(GG)
+print GG.number_of_edges()
+print 1,2
 
-print GG.get_edge_data(3,2)
-
-clu = nx.clustering(GG)
-# print clu
+# print nx.graph_clique_number(GG)
+# print nx.degree_centrality(GG)
+# print nx.clustering(GG)
+# print nx.betweenness_centrality(GG)
 # print nx.pagerank(GG)
-# print nx.number_connected_components(GG)
-# print nx.average_clustering(GG)
-print nx.rich_club_coefficient(GG)
 
-dic = {}
+
+
 
 # row = []
 # for node in GG.nodes_iter():
@@ -115,3 +105,37 @@ import matplotlib.pyplot as plt
 # # aba_sms_test("E:\\enron\\enron\\out.enron")
 # x = time.localtime(989734307)
 # print time.strftime('%Y-%m-%d %H:%M:%S',x)
+#  aba_gsm数据迁移到数据库
+def aba_gsm_txt2db(file_name):
+    aba_begin_date = datetime.datetime(2009, 12, 31)
+    file = open(file_name, 'r')
+
+    line_cnt = 0
+    num_set = set()
+    for line in file:
+        line_cnt += 1
+        data = line.strip().split(',')
+
+        from_num = data[0]
+        to_num = data[9]
+        if not to_num.isdigit():
+            continue
+
+        year = data[6][0:4]
+        month = data[8].split('-')[1].split('月')[0]
+        day = data[8].split('-')[0]
+        date_time = datetime.datetime(int(year), int(month), int(day))
+        date_index = (date_time - aba_begin_date).days
+        if date_index > 530:
+            continue
+
+        num_set.add(from_num)
+        num_set.add(to_num)
+
+        if line_cnt % 10000 == 0:
+            print line_cnt
+
+    file.close()
+    print len(num_set)
+
+# aba_gsm_txt2db("D:\\数据集\\阿坝\\bf_gsm_call_t_all\\bf_gsm_call_t_all.txt")

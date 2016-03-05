@@ -6,6 +6,7 @@ import time
 import networkx as nx
 import matplotlib.pyplot as plt
 import MySQLdb
+from AnomalyDetection import *
 
 time_format = time_format = '%m-%d-%H-%M'
 result_file_path = 'result\\' + time.strftime(time_format, time.localtime()) + '-'
@@ -201,7 +202,7 @@ def get_sms_network_node_property(time_scale):
                 network.add_edge(row[1], row[2], weight=1+network.get_edge_data(row[1], row[2])['weight'])
         select_cur.close()
         conn.commit()
-        clu = nx.clustering(network)
+        clu = nx.clustering(network, weight='weight')
         # number_connected_components
         # average_clustering
         # rich_club_coefficient
@@ -219,40 +220,14 @@ def get_sms_network_node_property(time_scale):
         insert_cur = conn.cursor()
         insert_cur.executemany(sql_insert, rows)
         conn.commit()
-        print 'row'
-        # in_degree = network.in_degree(weight='weight')
-        # out_degree = network.out_degree(weight='weight')
-        # un_di_network = nx.Graph()
-        # for n, nbrs in network.adjacency_iter():
-        #     for nbr, edict in nbrs.items():
-        #         sum_value = sum([d['weight'] for d in edict.values()])
-        #         if not un_di_network.has_edge(n, nbr):
-        #             un_di_network.add_edge(n, nbr, weight=sum_value)
-        #         else:
-        #             un_di_network.add_edge(n, nbr, weight=sum_value + un_di_network.get_edge_data(n, nbr)['weight'])
-        # clu = nx.clustering(un_di_network)
-        # rows = []
-        # for node in un_di_network.nodes_iter():
-        #     rows.append((node, out_degree[node], in_degree[node], clu[node], smash_date_index))
-        #
-        # insert_cur = conn.cursor()
-        # insert_cur.executemany(sql_insert, rows)
-        # conn.commit()
 
     conn.close()
-
-        # # print network.number_of_selfloops()
-        # print nx.density(network)
-        # print nx.average_clustering(network)
-        #
-        # print float(sum(network.degree().values()))/network.number_of_nodes()     # 平均度
-        # # avg_degree_all[i].append(float(sum(network.degree().values()))/7716)
 
 
 def get_gsm_network_node_property(time_scale):
     table_name = 'aba_gsm'
-    min_date_index = 1
-    max_date_index = 730
+    min_date_index = 511
+    max_date_index = 531
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
     sql_select = 'SELECT * FROM ' + table_name + ' WHERE date_index >= %s and date_index < %s'
     sql_insert = 'INSERT INTO ' + table_name + '_' + str(time_scale) + 'd' + ' (num, out_degree, in_degree, clu, date_index) VALUES(%s, %s, %s,%s,%s);'
@@ -260,7 +235,7 @@ def get_gsm_network_node_property(time_scale):
     for begin_date_index in range(min_date_index, max_date_index, time_scale):
         end_date_index = begin_date_index + time_scale
         smash_date_index = begin_date_index / time_scale + 1
-        print smash_date_index
+        print time_scale, smash_date_index
 
         select_cur = conn.cursor()
         select_cur.execute(sql_select, (begin_date_index, end_date_index))
@@ -268,6 +243,7 @@ def get_gsm_network_node_property(time_scale):
         # 构建网络
         out_degree = {}
         in_degree = {}
+        rows = []
         network = nx.Graph()
         for row in result_data:
             # network.add_edge(row[0], row[1], weight=1)
@@ -286,8 +262,9 @@ def get_gsm_network_node_property(time_scale):
                 network.add_edge(row[1], row[2], weight=1+network.get_edge_data(row[1], row[2])['weight'])
         select_cur.close()
         conn.commit()
-        clu = nx.clustering(network)
-        rows = []
+        clu = nx.clustering(network, weight='weight')
+        # degree_centrality
+
         for node in network.nodes_iter():
             out_value = 0
             in_value = 0
@@ -304,6 +281,7 @@ def get_gsm_network_node_property(time_scale):
     conn.close()
 
 get_gsm_network_node_property(30)
+
 # get_sms_network_node_property(24)
 # analyse_network_property(as_window_size_arr)
 
