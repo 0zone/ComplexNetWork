@@ -26,7 +26,7 @@ def plot_best_thredhold(file_name, thres_hold_num):
     plt.plot(x, y, plot_style[0])
     plt.show()
 # plot_best_thredhold("E:\\实验\\异常点检测\\gsm_7d_6th阈值.txt")
-plot_best_thredhold("D:\\ComplexNetwork\\result\\best_threshold\\gsm_7_10.txt", 300)
-plot_best_thredhold("D:\\ComplexNetwork\\result\\best_threshold\\gsm_7_20.txt", 300)
-plot_best_thredhold("D:\\ComplexNetwork\\result\\best_threshold\\gsm_7_30.txt", 300)
+# plot_best_thredhold("D:\\ComplexNetwork\\result\\best_threshold\\gsm_7d_6th阈值.txt", 600)
+plot_best_thredhold("D:\\ComplexNetwork\\result\\best_threshold\\gsm_7d_6th阈值_分别sim.txt", 300)
+# plot_best_thredhold("D:\\ComplexNetwork\\result\\best_threshold\\gsm_7_30.txt", 300)
 

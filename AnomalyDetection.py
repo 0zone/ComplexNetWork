@@ -165,19 +165,20 @@ def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, dec
     # plt.show()
 
 
-def get_node_anomaly_score(time_scale, slice_size):
-    begin_line = 2092804
+def get_node_anomaly_score(time_scale, slice_size, begin_line):
+
     num_file_name = current_path + "\\result\\num.txt"
     num_file = open(num_file_name, 'r')
     node_score_file_name = current_path + "\\result\\node_score\\gsm_" + str(time_scale) + "-" + str(begin_line) + ".txt"
     node_score_file = open(node_score_file_name, 'w')
 
-    line_cnt = 0
+    line_cnt = 1
 
-    for line in num_file:
-        line_cnt += 1
-        if line_cnt == begin_line:
-            break
+    if line_cnt < begin_line:
+        for line in num_file:
+            line_cnt += 1
+            if line_cnt == begin_line:
+                break
 
     for line in num_file:
         line_cnt += 1
@@ -206,6 +207,7 @@ def get_node_anomaly_score(time_scale, slice_size):
 # node_file = open(node_file_name, 'r')
 # for line in node_file:
 #     aba_gsm_node_anomaly_detection(7, line.strip(), 76, 5, 0.8, 0.25)
-# "\\result\\num.txt"
+# "\\result\\num.txt"outlier
 
-get_node_anomaly_score(30, 18)
+
+get_node_anomaly_score(10, 53, 1)
