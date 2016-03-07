@@ -11,7 +11,7 @@ aba_gsm_node_cnt = 4270930  # 1µ½530
 def get_gsm_network_property(time_scale):
     table_name = 'aba_gsm'
     min_date_index = 1
-    max_date_index = 530
+    max_date_index = 531
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
     sql_select = 'SELECT * FROM ' + table_name + ' WHERE date_index >= %s and date_index < %s'
 
@@ -52,5 +52,5 @@ def get_gsm_network_property(time_scale):
 
 # get_gsm_network_property(70)
 
-for time_scale in range(14, 30):
+for time_scale in range(30, 49):
     get_gsm_network_property(time_scale)

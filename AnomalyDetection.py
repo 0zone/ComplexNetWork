@@ -16,7 +16,7 @@ import os
 aba_gsm_days = 530
 feature_num = 5
 plot_style = ['b', 'r', 'ro', 'bs', 'c^', 'gp', 'mh', 'y2', 'k.']   # µã
-
+conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
 current_path = "D:\\ComplexNetwork"
 
 
@@ -78,7 +78,6 @@ def get_best_threhold(time_scale, slice_size, window_size, decay):
     node_anomaly_score_file_name = current_path + "\\result\\node_anomaly_score\\gsm_" + str(time_scale) + "_" + str(slice_size) + ".txt"
     node_anomaly_score_file = open(node_anomaly_score_file_name, 'w')
 
-    conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
     cur = conn.cursor()
 
 
@@ -98,7 +97,7 @@ def get_best_threhold(time_scale, slice_size, window_size, decay):
 
     cur.close()
     conn.commit()
-    conn.close()
+
 
     for threhold in threhold_count:
         best_thres_hold_file.write(str(threhold) + '\n')
@@ -108,7 +107,7 @@ def get_best_threhold(time_scale, slice_size, window_size, decay):
 
 def get_aba_gsm_node_feature(time_scale, num, slice_size):
     table_name = 'aba_gsm_' + str(time_scale) + 'd'
-    conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
+
     cur = conn.cursor()
 
     sql_select = 'SELECT * FROM ' + table_name + ' WHERE num = %s and date_index<=%s'
@@ -128,7 +127,7 @@ def get_aba_gsm_node_feature(time_scale, num, slice_size):
 
     cur.close()
     conn.commit()
-    conn.close()
+
     return len(result_data), node_feature
 
 
@@ -156,6 +155,8 @@ def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, dec
             similar += cos_similar(normalization_feature[cur_date - i], cur_feature) * pow(decay, i)
             windows_cnt += 1
         similar /= windows_cnt
+        if similar < 0.000001:
+            similar = 0.0
         similar_score[cur_date] = similar
 
     return feature_num, similar_score
@@ -165,16 +166,17 @@ def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, dec
 
 
 def get_node_anomaly_score(time_scale, slice_size):
+    begin_line = 2092804
     num_file_name = current_path + "\\result\\num.txt"
     num_file = open(num_file_name, 'r')
-    node_score_file_name = current_path + "\\result\\node_score\\gsm_" + str(time_scale) + ".txt"
+    node_score_file_name = current_path + "\\result\\node_score\\gsm_" + str(time_scale) + "-" + str(begin_line) + ".txt"
     node_score_file = open(node_score_file_name, 'w')
 
     line_cnt = 0
-    begin_line = 1805980
+
     for line in num_file:
         line_cnt += 1
-        if line_cnt == 1805980:
+        if line_cnt == begin_line:
             break
 
     for line in num_file:
@@ -190,7 +192,7 @@ def get_node_anomaly_score(time_scale, slice_size):
 
     node_score_file.close()
     num_file.close()
-
+    conn.close()
 # get_best_threhold(7, 6, 5, 0.8)
 # get_best_threhold(7, 10, 5, 0.8)
 # get_best_threhold(7, 20, 5, 0.8)
