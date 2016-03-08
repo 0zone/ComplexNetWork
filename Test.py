@@ -11,13 +11,14 @@ current_path = "D:\\ComplexNetwork"
 GG = nx.Graph()
 GG.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
 # GG.add_weighted_edges_from([ (1,2,4)])
-print float(sum(GG.degree(weight='weight').values()))/GG.number_of_nodes()
-print nx.average_clustering(GG)
-print nx.number_connected_components(GG)
-print nx.density(GG)
-print nx.degree_assortativity_coefficient(GG)
+# print float(sum(GG.degree(weight='weight').values()))/GG.number_of_nodes()
+# print nx.average_clustering(GG)
+# print nx.number_connected_components(GG)
+# print nx.density(GG)
+# print nx.degree_assortativity_coefficient(GG)
+# print GG.number_of_edges()
+# print 1,2
 print GG.number_of_edges()
-print 1,2
 
 # print nx.graph_clique_number(GG)
 # print nx.degree_centrality(GG)
@@ -140,13 +141,13 @@ def aba_gsm_txt2db(file_name):
 
 # aba_gsm_txt2db("D:\\Êý¾Ý¼¯\\°¢°Ó\\bf_gsm_call_t_all\\bf_gsm_call_t_all.txt")
 
-conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
-cur = conn.cursor()
-reslut_file_name = current_path + "\\result\\num.txt"
-file = open(reslut_file_name, 'w')
-
-sql_select = 'SELECT DISTINCT num FROM aba_gsm_30d'
-cur.execute(sql_select)
-result_data = cur.fetchall()
-for row in result_data:
-    file.write(row[0] + '\n')
+# conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
+# cur = conn.cursor()
+# reslut_file_name = current_path + "\\result\\num.txt"
+# file = open(reslut_file_name, 'w')
+#
+# sql_select = 'SELECT DISTINCT num FROM aba_gsm_30d'
+# cur.execute(sql_select)
+# result_data = cur.fetchall()
+# for row in result_data:
+#     file.write(row[0] + '\n')
