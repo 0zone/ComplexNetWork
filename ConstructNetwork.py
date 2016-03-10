@@ -6,11 +6,14 @@ import time
 import networkx as nx
 import matplotlib.pyplot as plt
 import MySQLdb
-from AnomalyDetection import *
+# from AnomalyDetection import *
 
 time_format = time_format = '%m-%d-%H-%M'
 result_file_path = 'result\\' + time.strftime(time_format, time.localtime()) + '-'
-
+aba_gsm_path = "D:\\ComplexNetwork\\result\\network_pro\\gsm\\"
+aba_sms_path = "D:\\ComplexNetwork\\result\\network_pro\\sms\\"
+aba_gsm_node_cnt = 4270930  # 1到530
+aba_sms_node_cnt = 9330493
 # table_name = 'as733'
 as_max_date_index = 734                        # 最大时间
 as_node_num_all = 7716                         # 点数
@@ -226,11 +229,14 @@ def get_sms_network_node_property(time_scale):
 
 def get_gsm_network_node_property(time_scale):
     table_name = 'aba_gsm'
-    min_date_index = 511
+    min_date_index = 1
     max_date_index = 531
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
     sql_select = 'SELECT * FROM ' + table_name + ' WHERE date_index >= %s and date_index < %s'
     sql_insert = 'INSERT INTO ' + table_name + '_' + str(time_scale) + 'd' + ' (num, out_degree, in_degree, clu, date_index) VALUES(%s, %s, %s,%s,%s);'
+
+    file_name = aba_gsm_path + str(time_scale) + ".txt"
+    file = open(file_name, 'w')
 
     for begin_date_index in range(min_date_index, max_date_index, time_scale):
         end_date_index = begin_date_index + time_scale
@@ -277,10 +283,21 @@ def get_gsm_network_node_property(time_scale):
         insert_cur = conn.cursor()
         insert_cur.executemany(sql_insert, rows)
         conn.commit()
+        # 存储结果
+        node_cnt = network.number_of_nodes()
+        edge_cnt = network.number_of_edges()
+        degree = float(sum(network.degree(weight='weight').values())) / aba_gsm_node_cnt
+        average_clustering = (nx.average_clustering(network, weight='weight') * node_cnt) / aba_gsm_node_cnt
+        number_connected_components = nx.number_connected_components(network)
+        file.write(str(smash_date_index) + '    ' + str(degree) + '    ' + str(average_clustering) + '    ' + str(number_connected_components) + '\n')
 
+    file.close()
     conn.close()
 
-# get_gsm_network_node_property(30)
+get_gsm_network_node_property(25)
+# for time_scale in range(31, 40):
+#     get_gsm_network_node_property(time_scale)
+
 
 # get_sms_network_node_property(24)
 # analyse_network_property(as_window_size_arr)
