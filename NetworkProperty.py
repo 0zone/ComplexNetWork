@@ -154,8 +154,8 @@ def get_as_network_property(time_scale):
 # 40 49 50 60 70
 # get_gsm_network_property(70)
 
-# for time_scale in range(24, 70, 4):
-#     get_sms_network_property(time_scale)
+for time_scale in range(3, 70, 2):
+    get_sms_network_property(time_scale)
 
-for time_scale in range(70, 150):
-    get_as_network_property(time_scale)
+# for time_scale in range(70, 150):
+#     get_as_network_property(time_scale)
