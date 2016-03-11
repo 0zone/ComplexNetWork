@@ -28,6 +28,9 @@ def get_gsm_network_node_property(begin_date, time_scale):
 
 G = get_gsm_network_node_property(1, 1)
 print 1
+dendo = generate_dendogram(G)
+for level in range(len(dendo) - 1):
+    print "partition at level", level, "is", #partition_at_level(dendo, level)
 # G=nx.erdos_renyi_graph(20, 0.05)
 # G = nx.Graph()
 # G.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
