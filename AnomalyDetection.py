@@ -158,7 +158,7 @@ def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, dec
     plt.subplot(211)
     plt.plot(x_axis, normalization_feature[:, 0], plot_style[0], label="out-degree")
     plt.plot(x_axis, normalization_feature[:, 1], plot_style[1], label="in-degree")
-    plt.plot(x_axis, normalization_feature[:, 3], plot_style[2], label="cluster coff")
+    plt.plot(x_axis, normalization_feature[:, 3], plot_style[2], label="cluster coefficient")
     plt.legend()
 
 
