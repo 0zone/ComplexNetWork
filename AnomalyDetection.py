@@ -260,7 +260,7 @@ score_file_dict = {7: score_file_7, 10: score_file_10, 15: score_file_15, 25: sc
 node_file = open(node_file_name, 'r')
 for line in node_file:
     num = line.strip()
-    print "\n"+num
+    print "\n" + num
 
     for k in [7, 10, 15, 25, 30]:
         feature_num, similar_score, anomaly_ratio = aba_gsm_node_anomaly_detection(k, num, scale_dict[k], 1, 0.7, 0.8)
