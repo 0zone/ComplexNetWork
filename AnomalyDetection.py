@@ -264,7 +264,7 @@ def compute_var(score):
 
 
 # get_node_anomaly_score(7, scale_dict[7], 1)
-# get_node_anomaly_score(14, scale_dict[14], 1)
+get_node_anomaly_score(14, scale_dict[14], 1)
 # get_node_anomaly_score(1, scale_dict[1], 1)
 
 # scale_dict = {1: 530, 7: 76, 10: 53, 14: 38, 15: 36, 20: 27, 21: 26, 25: 22, 28: 19, 30: 18}
@@ -296,5 +296,5 @@ def compute_var(score):
 #     # print compute_var(similar_score), compute_var(similar_score1), compute_var(similar_score2), compute_var(similar_score3)
 #     # print anomaly_ratio, anomaly_ratio1, anomaly_ratio2, anomaly_ratio3
 
-for k in [1, 7, 14, 21, 28]:
-    f_num, score = aba_gsm_node_anomaly_detection(k, "13219842980", scale_dict[k], 1, 0.7, 0.8)
+# for k in [1, 7, 14, 21, 28]:
+#     f_num, score = aba_gsm_node_anomaly_detection(k, "13219842980", scale_dict[k], 1, 0.7, 0.8)

@@ -1,59 +1,128 @@
-# scoding=utf-8
-import pylab as pl
-from collections import defaultdict,Counter
-points = [[int(eachpoint.split("#")[0]), int(eachpoint.split("#")[1])] for eachpoint in open("points","r")]
-# 计算每个数据点相邻的数据点，邻域定义为以该点为中心以边长为2*EPs的网格
-Eps = 10
-surroundPoints = defaultdict(list)
-for idx1,point1 in enumerate(points):
-  for idx2,point2 in enumerate(points):
-    if (idx1 < idx2):
-      if(abs(point1[0]-point2[0])<=Eps and abs(point1[1]-point2[1])<=Eps):
-        surroundPoints[idx1].append(idx2)
-        surroundPoints[idx2].append(idx1)
-# 定义邻域内相邻的数据点的个数大于4的为核心点
-MinPts = 5
-corePointIdx = [pointIdx for pointIdx,surPointIdxs in surroundPoints.iteritems() if len(surPointIdxs)>=MinPts]
-# 邻域内包含某个核心点的非核心点，定义为边界点
-borderPointIdx = []
-for pointIdx,surPointIdxs in surroundPoints.iteritems():
-  if (pointIdx not in corePointIdx):
-    for onesurPointIdx in surPointIdxs:
-      if onesurPointIdx in corePointIdx:
-        borderPointIdx.append(pointIdx)
-        break
-# 噪音点既不是边界点也不是核心点
-noisePointIdx = [pointIdx for pointIdx in range(len(points)) if pointIdx not in corePointIdx and pointIdx not in borderPointIdx]
-corePoint = [points[pointIdx] for pointIdx in corePointIdx] 
-borderPoint = [points[pointIdx] for pointIdx in borderPointIdx]
-noisePoint = [points[pointIdx] for pointIdx in noisePointIdx]
-# pl.plot([eachpoint[0] for eachpoint in corePoint], [eachpoint[1] for eachpoint in corePoint], 'or')
-# pl.plot([eachpoint[0] for eachpoint in borderPoint], [eachpoint[1] for eachpoint in borderPoint], 'oy')
-# pl.plot([eachpoint[0] for eachpoint in noisePoint], [eachpoint[1] for eachpoint in noisePoint], 'ok')
-groups = [idx for idx in range(len(points))]
-# 各个核心点与其邻域内的所有核心点放在同一个簇中
-for pointidx,surroundIdxs in surroundPoints.iteritems():
-  for oneSurroundIdx in surroundIdxs:
-    if (pointidx in corePointIdx and oneSurroundIdx in corePointIdx and pointidx < oneSurroundIdx):
-      for idx in range(len(groups)):
-        if groups[idx] == groups[oneSurroundIdx]:
-          groups[idx] = groups[pointidx]
-# 边界点跟其邻域内的某个核心点放在同一个簇中
-for pointidx,surroundIdxs in surroundPoints.iteritems():
-  for oneSurroundIdx in surroundIdxs:
-    if (pointidx in borderPointIdx and oneSurroundIdx in corePointIdx):
-      groups[pointidx] = groups[oneSurroundIdx]
-      break
-# 取簇规模最大的5个簇
-wantGroupNum = 3
-finalGroup = Counter(groups).most_common(3)
-finalGroup = [onecount[0] for onecount in finalGroup]
-group1 = [points[idx] for idx in xrange(len(points)) if groups[idx]==finalGroup[0]]
-group2 = [points[idx] for idx in xrange(len(points)) if groups[idx]==finalGroup[1]]
-group3 = [points[idx] for idx in xrange(len(points)) if groups[idx]==finalGroup[2]]
-pl.plot([eachpoint[0] for eachpoint in group1], [eachpoint[1] for eachpoint in group1], 'or')
-pl.plot([eachpoint[0] for eachpoint in group2], [eachpoint[1] for eachpoint in group2], 'oy')
-pl.plot([eachpoint[0] for eachpoint in group3], [eachpoint[1] for eachpoint in group3], 'og')
-# 打印噪音点，黑色
-pl.plot([eachpoint[0] for eachpoint in noisePoint], [eachpoint[1] for eachpoint in noisePoint], 'ok')  
-pl.show()
+import math
+
+def getDistance(pt1, pt2):
+    tmp = pow(pt1[0]-pt2[0],2) + pow(pt1[1]-pt2[1],2)
+    return pow(tmp,0.5)
+
+def ChooseDc(dc_percent,points,dis,distance):
+    avgNeighbourNum = dc_percent*len(points)
+    
+    maxd = 0
+    for i in range(0,len(points)):
+        for j in range(i+1,len(points)):
+            pt1 = points[i]
+            pt2 = points[j]
+            d = getDistance(pt1,pt2)
+            dis.append(d)
+            distance[i,j] = d
+            dis.append(d)
+            distance[j,i] = d
+            if d>maxd:
+                maxd = d
+    dis.sort()
+    return dis[int(avgNeighbourNum*len(points)*2)]
+
+def drawOriginGraph(pl,points,cl,colorNum):
+    x = [xx for (xx,yy) in points]
+    y = [yy for (xx,yy) in points]
+    cm = pl.get_cmap("RdYlGn")
+    for i in range(len(points)):
+        pl.plot(x[i],y[i],'o',color=cm(cl[i]*1.0/colorNum))
+
+def drawDecisionGraph(pl,rho, delta,cl,colorNum):
+    cm = pl.get_cmap("RdYlGn")
+    for i in range(len(rho)):
+        pl.plot(rho[i], delta[i],'o',color=cm(cl[i]*1.0/colorNum))
+    pl.xlabel(r'$\rho$')
+    pl.ylabel(r'$\delta$')
+    
+def Cluster():
+    #=========Load Data=========
+    InputFileName = "flame"
+    OutputFileName = InputFileName + "_out"
+    suffix = ".txt"
+
+    Fin = open(InputFileName+suffix,"r")
+    Fout = open(OutputFileName+suffix,"w")
+
+    points = []
+    for line in Fin.readlines():
+        data = line.split()
+        if len(data)==3:
+            a = float(data[0])
+            b = float(data[1])
+            points.append((a,b))
+
+    #=========Calculating=========
+        #-----choose dc-----
+    dc_percent = 0.015
+    dis = []
+    distance = {}
+    dc = ChooseDc(dc_percent,points,dis,distance)
+    print("dc:"+str(dc))
+
+        #-----cal rho:"Cut off" kernel
+    '''
+    rho = [0 for i in range(len(points))]
+    for i in range(0,len(points)):
+        for j in range(i+1,len(points)):
+            dij = getDistance(points[i],points[j])
+            if dij<dc:
+                rho[i] += 1
+                rho[j] += 1
+    '''
+        #-----cal rho:"Gaussian Kernel"
+    rho = [0 for i in range(len(points))]
+    for i in range(0,len(points)):
+        for j in range(i+1,len(points)):
+            dij = getDistance(points[i],points[j])
+            rho[i] += math.exp(-(dij/dc)*(dij/dc))
+            rho[j] += math.exp(-(dij/dc)*(dij/dc))
+           
+
+    rho_list =[(rho[i],i) for i in range(len(rho))]
+    rho_sorted = sorted(rho_list, reverse=1)
+    print("Highest rho:",rho_sorted[0])
+
+    maxd = dis[-1]
+    delta = [maxd for i in range(len(points))]
+    nneigh = [-1 for i in range(len(points))]
+    for ii in range(1,len(rho_sorted)):
+        for jj in range(0,ii):
+            id_p1 = rho_sorted[ii][1] #get point1's id
+            id_p2 = rho_sorted[jj][1] #get point2's id
+            if (distance[id_p1,id_p2]<delta[id_p1]):
+                delta[id_p1] = distance[id_p1,id_p2]
+                nneigh[id_p1] = id_p2
+
+    #assignment
+    cl = [-1 for i in range(len(points))]
+    colorNum = 0
+    for ii in range(len(rho_sorted)):
+        id_p = rho_sorted[ii][1]
+        if (cl[id_p] == -1 and delta[id_p]>7.0):
+            cl[id_p] = colorNum
+            colorNum += 1
+        else:
+            if (cl[id_p] == -1 and cl[nneigh[id_p]!=-1]):
+                cl[id_p] = cl[nneigh[id_p]]
+    print(colorNum)
+
+    import pylab as pl
+    fig1 = pl.figure(1)
+    pl.subplot(121)
+    drawOriginGraph(pl,points,cl,colorNum)
+    pl.subplot(122)
+    drawDecisionGraph(pl,rho,delta,cl,colorNum)
+    pl.show()
+
+    for i in range(len(points)):
+        Fout.write(str(i)+","+str(rho[i])+","+str(delta[i])+"\n")
+
+    #Assign Cluster
+
+    Fin.close()
+    Fout.close()
+
+if __name__=="__main__":
+    Cluster()
