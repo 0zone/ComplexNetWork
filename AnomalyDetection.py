@@ -21,8 +21,9 @@ plot_style = ['g', 'b', 'r', 'ro', 'bs', 'c^', 'gp', 'mh', 'y2', 'k.']   # 点
 conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
 current_path = "D:\\ComplexNetwork"
 node_file_name = current_path + "\\result\\node_score\\gsm_7_55anomaly.txt"
-result_pic_file_path = current_path + "\\result\\node_analysis\\"
+result_pic_file_path = current_path + "\\result\\node_analysis\\7\\"
 score_file_path = current_path + "\\result\\node_analysis\\"
+scale_dict = {1: 530, 7: 76, 10: 53, 14: 38, 15: 36, 20: 27, 21: 26, 25: 22, 28: 19, 30: 18}
 
 
 def normalization_matrix(m):
@@ -34,6 +35,16 @@ def normalization_matrix(m):
         else:
             m[:, col_index] = (m[:, col_index]-min_val) / (max_val-min_val)
     return m
+
+
+def normalization_vector(vector):
+    max_val = max(vector)
+    min_val = min(vector)
+    if max_val == min_val:
+        vector = 1
+    else:
+        vector = (vector-min_val) / (max_val-min_val)
+    return vector
 
 
 def os_distance(vector1, vector2):
@@ -129,6 +140,8 @@ def get_aba_gsm_node_feature(time_scale, num, slice_size):
     node_feature = np.zeros((slice_size, feature_sum))
     for row in result_data:
         r_num = row[5] - 1
+        if r_num >= slice_size:
+            continue
         node_feature[r_num][0] = row[2]             # 出度
         node_feature[r_num][1] = row[3]             # 入度
         node_feature[r_num][2] = row[2] + row[3]    # 总和
@@ -149,29 +162,20 @@ def get_aba_gsm_node_feature(time_scale, num, slice_size):
 def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, decay, threshold):
     similar_score = np.zeros((slice_size))
     x_axis = range(0, 530, time_scale)
+    # x_axis = range(0, slice_size)
     ab_line = np.zeros((slice_size+2)) + 0.25
     feature_num, node_feature = get_aba_gsm_node_feature(time_scale, num, slice_size)
 
     normalization_feature = normalization_matrix(node_feature)
     # print node_feature
     # 出入度
-    plt.subplot(211)
-    plt.plot(x_axis, normalization_feature[:, 0], plot_style[0], label="out-degree")
-    plt.plot(x_axis, normalization_feature[:, 1], plot_style[1], label="in-degree")
-    plt.plot(x_axis, normalization_feature[:, 3], plot_style[2], label="cluster coefficient")
-    plt.legend()
-
+    # print normalization_feature
 
     begin_date = 0
     end_date = normalization_feature.shape[0]
     anomaly_num = 0
     for cur_date in range(begin_date, end_date):
         cur_feature = normalization_feature[cur_date]
-
-        # for i in range(0, min(cur_date + 1, window_size + 1)):
-        #     pre_feature += normalization_feature[cur_date - i] * pow(decay, i)
-        # pre_feature /= window_size
-        # similar = cos_similar(pre_feature, cur_feature)
 
         if cur_date == begin_date:
             continue
@@ -184,36 +188,45 @@ def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, dec
         similar /= windows_cnt
         if similar < 0.000001:
             similar = 0.0
-        if similar >= 1.0:
-            similar = 0.921
-        if similar > threshold:
-            anomaly_num += 1
+        # if similar >= 1.0:
+        #     similar = 0.97427825
+    #     if similar > threshold:
+    #         anomaly_num += 1
         similar_score[cur_date] = similar
     anomaly_ratio = float(anomaly_num) / slice_size
 
-    plt.subplot(212)
-    z1 = np.polyfit(x_axis, similar_score, 5)#用3次多项式拟合
-    p1 = np.poly1d(z1)
-    yvals = p1(x_axis)
-
-    plt.plot(x_axis, similar_score, plot_style[3])
-    plt.plot(x_axis, yvals, 'b')
-    # plt.plot(x_axis, similar_score, plot_style[3], label="anomaly_score")
-    # plt.plot(x_axis, yvals, 'b', label="poly fit")
-    plt.title("avg:" + str(np.mean(similar_score)) + "    var:" + str(np.var(similar_score)) + "    high-score0.8:" + str(anomaly_ratio))
-    plt.legend()
+    # plot
+    # plt.subplot(211)
+    # plt.plot(x_axis, normalization_feature[:, 0], plot_style[0], label="out-degree")
+    # plt.plot(x_axis, normalization_feature[:, 1], plot_style[1], label="in-degree")
+    # plt.plot(x_axis, normalization_feature[:, 3], plot_style[2], label="cluster coefficient")
+    # plt.legend()
+    #
+    # plt.subplot(212)
+    # z1 = np.polyfit(x_axis, similar_score, 5)#用3次多项式拟合
+    # p1 = np.poly1d(z1)
+    # yvals = p1(x_axis)
+    #
+    # plt.plot(x_axis, similar_score, plot_style[3])
+    # plt.plot(x_axis, yvals, 'b')
+    # plt.axis([0, 600, 0, 1.1])
+    # # plt.plot(x_axis, similar_score, plot_style[3], label="anomaly_score")
+    # # plt.plot(x_axis, yvals, 'b', label="poly fit")
+    # plt.title("avg:" + str(np.mean(similar_score)) + "    var:" + str(np.var(similar_score)) + "    high-score0.8:" + str(anomaly_ratio))
+    # # plt.xticks(fontsize=30)
+    # plt.legend()
+    #
     # plt.show()
-    result_pic_name = result_pic_file_path + num + "_" + str(time_scale) + ".png"
-    if os.path.exists(result_pic_name):
-        os.remove(result_pic_name)
-    plt.savefig(result_pic_name)
-    plt.close()
+    # result_pic_name = result_pic_file_path + num + "_" + str(time_scale) + ".png"
+    # if os.path.exists(result_pic_name):
+    #     os.remove(result_pic_name)
+    # plt.savefig(result_pic_name)
+    # plt.close()
 
-    return feature_num, similar_score, anomaly_ratio
+    return feature_num, similar_score
 
 
 def get_node_anomaly_score(time_scale, slice_size, begin_line):
-
     num_file_name = current_path + "\\result\\num.txt"
     num_file = open(num_file_name, 'r')
     node_score_file_name = current_path + "\\result\\node_score\\gsm_" + str(time_scale) + "-" + str(begin_line) + ".txt"
@@ -222,7 +235,7 @@ def get_node_anomaly_score(time_scale, slice_size, begin_line):
     line_cnt = 1
 
     if line_cnt < begin_line:
-        for line in num_file:
+        for num_line in num_file:
             line_cnt += 1
             if line_cnt == begin_line:
                 break
@@ -231,8 +244,8 @@ def get_node_anomaly_score(time_scale, slice_size, begin_line):
         line_cnt += 1
         print line_cnt
         num = line.strip()
-        feature_num, score = aba_gsm_node_anomaly_detection(time_scale, num, slice_size, 5, 0.8, 0.25)
-        node_score_file.write(num + " " + str(feature_num) + " ")
+        f_num, score = aba_gsm_node_anomaly_detection(time_scale, num, slice_size, 1, 0.7, 0.8)
+        node_score_file.write(num + " " + str(f_num) + " ")
         for s in score:
             node_score_file.write(str(s))
             node_score_file.write(" ")
@@ -250,31 +263,38 @@ def compute_var(score):
     return sum/len(score)
 
 
-scale_dict = {1: 530, 7: 76, 10: 53, 15: 36, 20: 27, 25: 22, 30: 18}
-score_file_7 = open(score_file_path + "7.txt", 'w')
-score_file_10 = open(score_file_path + "10.txt", 'w')
-score_file_15 = open(score_file_path + "15.txt", 'w')
-score_file_25 = open(score_file_path + "25.txt", 'w')
-score_file_30 = open(score_file_path + "30.txt", 'w')
-score_file_dict = {7: score_file_7, 10: score_file_10, 15: score_file_15, 25: score_file_25, 30: score_file_30}
-node_file = open(node_file_name, 'r')
-for line in node_file:
-    num = line.strip()
-    print "\n" + num
+# get_node_anomaly_score(7, scale_dict[7], 1)
+# get_node_anomaly_score(14, scale_dict[14], 1)
+# get_node_anomaly_score(1, scale_dict[1], 1)
 
-    for k in [7, 10, 15, 25, 30]:
-        feature_num, similar_score, anomaly_ratio = aba_gsm_node_anomaly_detection(k, num, scale_dict[k], 1, 0.7, 0.8)
-        score_file_dict[k].write(num + " ")
-        for s in similar_score:
-            score_file_dict[k].write(str(s))
-            score_file_dict[k].write(" ")
-        score_file_dict[k].write("\n")
-        # print sum(similar_score)/len(similar_score)
-        # print np.mean(similar_score), str(np.var(similar_score)), anomaly_ratio
-    # print compute_var(similar_score), compute_var(similar_score1), compute_var(similar_score2), compute_var(similar_score3)
-    # print anomaly_ratio, anomaly_ratio1, anomaly_ratio2, anomaly_ratio3
+# scale_dict = {1: 530, 7: 76, 10: 53, 14: 38, 15: 36, 20: 27, 21: 26, 25: 22, 28: 19, 30: 18}
+# score_file_7 = open(score_file_path + "7.txt", 'w')
+# score_file_10 = open(score_file_path + "10.txt", 'w')
+# score_file_15 = open(score_file_path + "15.txt", 'w')
+# score_file_25 = open(score_file_path + "25.txt", 'w')
+# score_file_30 = open(score_file_path + "30.txt", 'w')
+# score_file_dict = {7: score_file_7, 10: score_file_10, 15: score_file_15, 25: score_file_25, 30: score_file_30}
+# line_cnt = 0
+# node_file = open(node_file_name, 'r')
+# for line in node_file:
+#     line_cnt += 1
+#     # if line_cnt < 51:
+#     #     continue
+#     num = line.strip()
+#     print "\n" + num
+    # for k in [7]:
+    # for k in [7, 10, 14, 15, 21, 25, 28,  30]:
+    # for k in [7, 14, 28]:
+    #     f_num, score, anomaly_ratio = aba_gsm_node_anomaly_detection(k, "13219842980", scale_dict[k], 1, 0.7, 0.8)
+#         # score_file_dict[k].write(num + " ")
+#         # for s in similar_score:
+#         #     score_file_dict[k].write(str(s))
+#         #     score_file_dict[k].write(" ")
+#         # score_file_dict[k].write("\n")
+#         # print sum(similar_score)/len(similar_score)
+#         # print np.mean(similar_score), str(np.var(similar_score)), anomaly_ratio
+#     # print compute_var(similar_score), compute_var(similar_score1), compute_var(similar_score2), compute_var(similar_score3)
+#     # print anomaly_ratio, anomaly_ratio1, anomaly_ratio2, anomaly_ratio3
 
-# for k in [7, 10, 15, 30]:
-#     feature_num, similar_score, anomaly_ratio = aba_gsm_node_anomaly_detection(k, "15583070001", dict[k], 5, 0.7, 0.8)
-# 单节点用os
-# 模式分析用cos
+for k in [1, 7, 14, 21, 28]:
+    f_num, score = aba_gsm_node_anomaly_detection(k, "13219842980", scale_dict[k], 1, 0.7, 0.8)

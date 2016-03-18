@@ -9,7 +9,8 @@ import MySQLdb
 
 current_path = "D:\\ComplexNetwork"
 GG = nx.Graph()
-GG.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
+# GG.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
+GG.add_weighted_edges_from([ ('2','2',1),('1','2',4), ('1','4',4),('1','3',1), ('2','3',2),('3','4',1) ,('3','5',2) ,('2','6',2) ,('5','6',2), ('1','1',4), ('1','1',4)])
 # GG.add_weighted_edges_from([ (1,2,4)])
 # print float(sum(GG.degree(weight='weight').values()))/GG.number_of_nodes()
 # print nx.average_clustering(GG)
@@ -18,8 +19,21 @@ GG.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1)
 # print nx.degree_assortativity_coefficient(GG)
 # print GG.number_of_edges()
 # print 1,2
-print GG.number_of_edges()
+n = GG.neighbors('1')
+n.append('1')
+ego = nx.ego_graph(GG, '1' ,radius=1)
 
+print ego.edges()
+print ego.number_of_selfloops()
+print ego.number_of_nodes()
+print ego.number_of_edges()
+w = sum(ego.degree(weight='weight').values()) / 2
+print w
+# print H.edges()
+# print H.number_of_edges()
+# print H.number_of_nodes()
+# # print H.edges(weight='weight')
+# print sum(H.degree(weight='weight').values())
 # print nx.graph_clique_number(GG)
 # print nx.degree_centrality(GG)
 # print nx.clustering(GG)
@@ -151,3 +165,10 @@ def aba_gsm_txt2db(file_name):
 # result_data = cur.fetchall()
 # for row in result_data:
 #     file.write(row[0] + '\n')
+
+# import networkx as nx
+# G = nx.random_graphs.barabasi_albert_graph(100000,3)   #生成一个n=1000，m=3的BA无标度网络
+# degree = nx.degree_histogram(G)          #返回图中所有节点的度分布序列
+# x = range(len(degree))                             #生成x轴序列，从1到最大度
+# plt.loglog(x,degree,"bo",linewidth=2)           #在双对数坐标轴上绘制度分布曲线
+# plt.show()                                                          #显示图表

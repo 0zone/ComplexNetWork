@@ -294,7 +294,8 @@ def get_gsm_network_node_property(time_scale):
     file.close()
     conn.close()
 
-get_gsm_network_node_property(25)
+get_gsm_network_node_property(1)
+
 # for time_scale in range(31, 40):
 #     get_gsm_network_node_property(time_scale)
 

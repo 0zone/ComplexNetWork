@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import MySQLdb
 
 
-def get_gsm_network_node_property(begin_date, time_scale):
+def get_gsm_network(begin_date, time_scale):
     table_name = 'aba_gsm'
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
     sql_select = 'SELECT * FROM ' + table_name + ' WHERE date_index >= %s and date_index < %s'
@@ -26,15 +26,50 @@ def get_gsm_network_node_property(begin_date, time_scale):
     conn.close()
     return network
 
-G = get_gsm_network_node_property(1, 1)
-print 1
+
+# 30
+# 0.88295076468
+# 2871
+# 1051406
+# 599593
+# 7
+# 0.912112298223
+# 5526
+# 393588
+# 288790
+# 14
+# 0.897485433869
+# 3987
+# 627347
+# 408509
+# 28
+# 0.884544591701
+# 2968
+# 1002535
+# 578633
+# 7 305
+# 0.911264282917
+# 4609
+# 466562
+# 332826
+
+G = get_gsm_network(305, 7)
+# G=nx.erdos_renyi_graph(100, 0.01)
+part = best_partition(G)
+set = set()
+for k, v in part.items():
+    set.add(v)
+print modularity(part, G)
+print len(set)
+print G.number_of_edges()
+print G.number_of_nodes()
 dendo = generate_dendogram(G)
 for level in range(len(dendo) - 1):
     print "partition at level", level, "is", #partition_at_level(dendo, level)
 # G=nx.erdos_renyi_graph(20, 0.05)
 # G = nx.Graph()
 # G.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
-partition = best_partition(G)
+# partition = best_partition(G)
 # print partition
 # nx.draw(G, nx.spring_layout(G), alpha=0.5, node_size=50)
 # plt.show()
