@@ -264,7 +264,9 @@ def compute_var(score):
 
 
 # get_node_anomaly_score(7, scale_dict[7], 1)
-get_node_anomaly_score(14, scale_dict[14], 1)
+get_node_anomaly_score(21, scale_dict[21], 1)
+get_node_anomaly_score(28, scale_dict[28], 1)
+
 # get_node_anomaly_score(1, scale_dict[1], 1)
 
 # scale_dict = {1: 530, 7: 76, 10: 53, 14: 38, 15: 36, 20: 27, 21: 26, 25: 22, 28: 19, 30: 18}

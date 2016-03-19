@@ -53,7 +53,7 @@ def get_gsm_network(begin_date, time_scale):
 # 466562
 # 332826
 
-G = get_gsm_network(1, 28)
+# G = get_gsm_network(1, 28)
 # G=nx.erdos_renyi_graph(100, 0.01)
 # part = best_partition(G)
 # set = set()
@@ -63,6 +63,8 @@ G = get_gsm_network(1, 28)
 # print len(set)
 # print G.number_of_edges()
 # print G.number_of_nodes()
+
+G = get_gsm_network(305, 7)
 dendo = generate_dendogram(G)
 for level in range(len(dendo) - 1):
     comm_dict = partition_at_level(dendo, level)
@@ -70,6 +72,8 @@ for level in range(len(dendo) - 1):
     for k, v in comm_dict.items():
         comm_set.add(v)
     print "partition at level", level, "is", len(comm_set)
+
+
 # G=nx.erdos_renyi_graph(20, 0.05)
 # G = nx.Graph()
 # G.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
@@ -78,6 +82,7 @@ for level in range(len(dendo) - 1):
 # nx.draw(G, nx.spring_layout(G), alpha=0.5, node_size=50)
 # plt.show()
 # plt.close()
+
 # dendo = generate_dendogram(G)
 # for level in range(len(dendo) - 1):
 #     print "partition at level", level, "is", partition_at_level(dendo, level)
@@ -111,11 +116,13 @@ for level in range(len(dendo) - 1):
 # nx.draw_networkx_edges(G,pos, alpha=0.5)
 # plt.show()
 
-# n = 3
-# g = nx.complete_graph(2*n)
-# part = dict([])
-# for node in g.nodes() :
-#     part[node] = node % 2
-# ind = induced_graph(part, g)
-# print ind
-# print 1
+n = 3
+g = nx.complete_graph(2*n)
+part = dict([])
+for node in g.nodes() :
+    part[node] = node % 2
+ind = induced_graph(part, g)
+for edge in ind.edges():
+    print str(edge[0]) + " " + str(edge[1])
+print ind
+print str("1")
