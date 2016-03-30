@@ -46,20 +46,24 @@ def var(c,n,p):
 
 def pic(x):
     plt.subplot(231)
+    plt.title("(a)",fontsize=20)
     data('as',x+2,1,7,28,49)
     plt.legend(('1 days','7 days','28 days','49 days'),loc='uper right',fontsize=15)
     if x==1:
         plt.ylabel('degree',fontsize=25)
     elif x==2:
-        plt.ylabel('clustering coeffcient')
+        plt.ylabel('clustering coeffcient',fontsize=25)
     else :
-        plt.ylabel('connected component')
+        plt.ylabel('connected component',fontsize=25)
     plt.xlabel('time(days)',fontsize=25)
     plt.xlim(0,900)
     plt.xticks(np.arange(0,900,200),fontsize=25)
-    plt.yticks(fontsize=25)
+    plt.yticks(np.arange(0,0.5,0.1),fontsize=25)
+    plt.axis([0, 800, 0, 0.4])
 
-    plt.subplot(232)
+
+    ax = plt.subplot(232)
+    plt.title("(b)",fontsize=20)
     data('sms',x+2,1,24,48,72)
     plt.legend(('1 hours','24 hours','48 hours','72 hours'),loc='uper right',fontsize=15)
     # if x==1:
@@ -71,10 +75,19 @@ def pic(x):
     plt.xlabel('time(hours)',fontsize=25)
     plt.xlim(0,900)
     plt.ylim(0,0.000001)
+    from matplotlib import ticker
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((-1,1))
+    ax.yaxis.set_major_formatter(formatter)
+    # plt.ylim(0,1e-6)
     plt.xticks(np.arange(0,900,200),fontsize=25)
     plt.yticks(fontsize=25)
+    plt.axis([0, 800, 0, 0.000001])
 
-    plt.subplot(233)
+
+    bx = plt.subplot(233)
+    plt.title("(c)",fontsize=20)
     data('gsm',x,1,7,28,49)
     plt.legend(('1 days','7 days','28 days','49 days'),loc='uper right',fontsize=15)
     # if x==1:
@@ -86,10 +99,18 @@ def pic(x):
     plt.xlabel('time(days)',fontsize=25)
     plt.xlim(0,900)
     plt.ylim(0,0.0001)
+    from matplotlib import ticker
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((-1,1))
+    bx.yaxis.set_major_formatter(formatter)
     plt.xticks(np.arange(0,900,200),fontsize=25)
     plt.yticks(fontsize=25)
+    plt.axis([0, 600, 0, 0.0001])
+
 
     plt.subplot(234)
+    plt.title("(d)",fontsize=20)
     x1=range(1,100)
     y1=[]
     for i in x1:
@@ -99,8 +120,10 @@ def pic(x):
     plt.xlabel('time scale',fontsize=25)
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
+    plt.axis([0, 120, 0, 0.1])
 
     plt.subplot(235)
+    plt.title("(e)",fontsize=20)
     x1=range(1,60)
     y1=[]
     for i in x1:
@@ -109,8 +132,10 @@ def pic(x):
     plt.xlabel('time scale',fontsize=25)
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
+    plt.axis([0, 70, 0, 0.7])
 
     plt.subplot(236)
+    plt.title("(f)",fontsize=20)
     x1=range(1,100)
     y1=[]
     for i in x1:
@@ -119,6 +144,7 @@ def pic(x):
     plt.xlabel('time scale',fontsize=25)
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
+    plt.axis([0, 40, 0, 0.1])
 
     plt.savefig('pic'+str(x)+'', dpi = 500)
     plt.show()

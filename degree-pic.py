@@ -46,8 +46,9 @@ def var(c,n,p):
 
 def pic(x):
     plt.subplot(231)
+    plt.title("(a)",fontsize=20)
     data('as',x+2,1,7,28,49)
-    plt.legend(('1 days','7 days','28 days','49 days'),loc='uper right',fontsize=15)
+    plt.legend(('1 days','7 days','28 days','49 days'),loc=2,fontsize=15)
     if x==1:
         plt.ylabel('degree',fontsize=25)
     elif x==2:
@@ -57,9 +58,11 @@ def pic(x):
     plt.xlabel('time(days)',fontsize=25)
     plt.xlim(0,900)
     plt.xticks(np.arange(0,900,200),fontsize=25)
-    plt.yticks(fontsize=25)
+    plt.yticks(np.arange(0,6,1),fontsize=25)
+    plt.axis([0, 800, 0, 5])
 
     plt.subplot(232)
+    plt.title("(b)",fontsize=20)
     data('sms',x+2,1,24,48,72)
     plt.legend(('1 hours','24 hours','48 hours','72 hours'),loc='uper right',fontsize=15)
     # if x==1:
@@ -71,9 +74,11 @@ def pic(x):
     plt.xlabel('time(hours)',fontsize=25)
     plt.xlim(0,900)
     plt.xticks(np.arange(0,900,200),fontsize=25)
-    plt.yticks(fontsize=25)
+    plt.yticks(np.arange(0,4,1),fontsize=25)
+    plt.axis([0, 800, 0, 3])
 
     plt.subplot(233)
+    plt.title("(c)",fontsize=20)
     data('gsm',x,1,7,28,49)
     plt.legend(('1 days','7 days','28 days','49 days'),loc='uper right',fontsize=15)
     # if x==1:
@@ -84,10 +89,12 @@ def pic(x):
     #     plt.ylabel('connected component')
     plt.xlabel('time(days)',fontsize=25)
     plt.xlim(0,900)
-    plt.xticks(np.arange(0,900,200),fontsize=25)
-    plt.yticks(fontsize=25)
+    plt.xticks(np.arange(0,700,200),fontsize=25)
+    plt.yticks(np.arange(0,11,2),fontsize=25)
+    plt.axis([0, 600, 0, 10])
 
     plt.subplot(234)
+    plt.title("(d)",fontsize=20)
     x1=range(1,100)
     y1=[]
     for i in x1:
@@ -97,8 +104,10 @@ def pic(x):
     plt.xlabel('time scale',fontsize=25)
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
+    plt.axis([0, 120, 0, 0.1])
 
     plt.subplot(235)
+    plt.title("(e)",fontsize=20)
     x1=range(1,60)
     y1=[]
     for i in x1:
@@ -107,8 +116,10 @@ def pic(x):
     plt.xlabel('time scale',fontsize=25)
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
+    plt.axis([0, 70, 0, 0.6])
 
     plt.subplot(236)
+    plt.title("(f)",fontsize=20)
     x1=range(1,100)
     y1=[]
     for i in x1:
@@ -117,11 +128,99 @@ def pic(x):
     plt.xlabel('time scale',fontsize=25)
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
+    plt.axis([0, 40, 0, 0.1])
 
     plt.savefig('pic'+str(x)+'', dpi = 500)
     plt.show()
-pic(1)
+# pic(1)
+def pic1(x):
+    plt.subplot(131)
+    plt.title("(a)",fontsize=20)
+    data('as',x+2,1,7,28,49)
+    plt.legend(('1 days','7 days','28 days','49 days'),loc=2,fontsize=15)
+    if x==1:
+        plt.ylabel('degree',fontsize=25)
+    elif x==2:
+        plt.ylabel('clustering coeffcient')
+    else :
+        plt.ylabel('connected component')
+    plt.xlabel('time(days)',fontsize=25)
+    plt.xlim(0,900)
+    plt.xticks(np.arange(0,900,200),fontsize=25)
+    plt.yticks(np.arange(0,6,1),fontsize=25)
+    plt.axis([0, 800, 0, 5])
 
+    plt.subplot(232)
+    plt.title("(b)",fontsize=20)
+    data('sms',x+2,1,24,48,72)
+    plt.legend(('1 hours','24 hours','48 hours','72 hours'),loc='uper right',fontsize=15)
+    # if x==1:
+    #     plt.ylabel('degree')
+    # elif x==2:
+    #     plt.ylabel('clustering coeffcient')
+    # else :
+    #     plt.ylabel('connected component')
+    plt.xlabel('time(hours)',fontsize=25)
+    plt.xlim(0,900)
+    plt.xticks(np.arange(0,900,200),fontsize=25)
+    plt.yticks(np.arange(0,4,1),fontsize=25)
+    plt.axis([0, 800, 0, 3])
+
+    plt.subplot(233)
+    plt.title("(c)",fontsize=20)
+    data('gsm',x,1,7,28,49)
+    plt.legend(('1 days','7 days','28 days','49 days'),loc='uper right',fontsize=15)
+    # if x==1:
+    #     plt.ylabel('degree')
+    # elif x==2:
+    #     plt.ylabel('clustering coeffcient')
+    # else :
+    #     plt.ylabel('connected component')
+    plt.xlabel('time(days)',fontsize=25)
+    plt.xlim(0,900)
+    plt.xticks(np.arange(0,700,200),fontsize=25)
+    plt.yticks(np.arange(0,11,2),fontsize=25)
+    plt.axis([0, 600, 0, 10])
+
+    plt.subplot(234)
+    plt.title("(d)",fontsize=20)
+    x1=range(1,100)
+    y1=[]
+    for i in x1:
+        y1.append(var(i,'as',x))
+    plt.scatter(x1,y1,color = 'red',s=50)
+    plt.ylabel('$\sigma$',fontsize=25)
+    plt.xlabel('time scale',fontsize=25)
+    plt.xticks(fontsize=25)
+    plt.yticks(fontsize=25)
+    plt.axis([0, 120, 0, 0.1])
+
+    plt.subplot(235)
+    plt.title("(e)",fontsize=20)
+    x1=range(1,60)
+    y1=[]
+    for i in x1:
+        y1.append(var(i,'sms',x))
+    plt.scatter(x1,y1,color = 'red',s=50)
+    plt.xlabel('time scale',fontsize=25)
+    plt.xticks(fontsize=25)
+    plt.yticks(fontsize=25)
+    plt.axis([0, 70, 0, 0.6])
+
+    plt.subplot(236)
+    plt.title("(f)",fontsize=20)
+    x1=range(1,100)
+    y1=[]
+    for i in x1:
+        y1.append(var(i,'gsm',x))
+    plt.scatter(x1,y1,color = 'red',s=50)
+    plt.xlabel('time scale',fontsize=25)
+    plt.xticks(fontsize=25)
+    plt.yticks(fontsize=25)
+    plt.axis([0, 40, 0, 0.1])
+
+    plt.savefig('pic'+str(x)+'', dpi = 500)
+    plt.show()
 
 
 

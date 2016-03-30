@@ -4,6 +4,8 @@ __author__ = 'yu'
 import networkx as nx
 import MySQLdb
 
+import matplotlib.pyplot as plt
+
 aba_gsm_path = "D:\\ComplexNetwork\\result\\network_pro\\gsm\\"
 aba_sms_path = "D:\\ComplexNetwork\\result\\network_pro\\sms\\"
 as_733_path = "D:\\ComplexNetwork\\result\\network_pro\\as\\"
@@ -11,7 +13,7 @@ aba_gsm_node_cnt = 4270930  # 1µ½530
 
 aba_sms_node_cnt = 9330493
 as_733_node_cnt = 7716
-
+plot_style = ['ro', 'bs', 'c^', 'gp', 'mh', 'y2', 'k.']
 
 def get_gsm_network_property(time_scale):
     table_name = 'aba_gsm'
@@ -51,7 +53,7 @@ def get_gsm_network_property(time_scale):
         # density = (2 * edge_cnt) / aba_gsm_node_cnt*(aba_gsm_node_cnt-1)
         # degree_assortativity_coefficient = nx.degree_assortativity_coefficient(network, weight='weight')
         # print 'ass'
-        file.write(str(smash_date_index) + '    ' + str(degree) + '    ' + str(average_clustering) + '    ' + str(number_connected_components) + '\n')
+        file.write(str(smash_date_index) + '    ' + str(node_cnt) + '    ' + str(edge_cnt) + '    ' + str(degree) + '    ' + str(average_clustering) + '    ' + str(number_connected_components) + '\n')
     file.close()
     conn.close()
 
@@ -151,12 +153,39 @@ def get_as_network_property(time_scale):
     conn.close()
 
 
+def sms_degree(sms_pro_file_name, pro_index):
+    degree_list = []
+    sms_pro_file = open(sms_pro_file_name, 'r')
+    for pro_line in sms_pro_file:
+        pro_line_data = pro_line.split("    ")
+        degree = float(pro_line_data[pro_index].strip())
+        degree_list.append(degree)
+    sms_pro_file.close()
+
+    x = range(0, len(degree_list))
+    title_font_size = 25
+    xlabel_name = "times(hours)"
+    ylabel_name = "degree"
+    plt.xticks(fontsize=title_font_size)
+    plt.yticks(fontsize=title_font_size)
+    plt.xlabel(xlabel_name, fontsize=title_font_size)
+    plt.ylabel(ylabel_name, fontsize=title_font_size)
+    plt.plot(x, degree_list, "r")
+    plt.plot(x, degree_list, "ro")
+    plt.show()
+
+# sms_data = "E:/data/3network_pro/sms/1.txt"
+# sms_degree(sms_data, 3)
+sms_data = "E:/data/3network_pro/gsm/1.txt"
+sms_degree(sms_data, 2)
+
+# get_gsm_network_property(1)
 # 40 49 50 60 70
 # get_gsm_network_property(70)
 # get_sms_network_property(72)
-get_sms_network_property(50)
-get_sms_network_property(54)
-get_sms_network_property(60)
+# get_sms_network_property(50)
+# get_sms_network_property(54)
+# get_sms_network_property(60)
 # for time_scale in range(3, 70, 2):
 #     get_sms_network_property(time_scale)
 

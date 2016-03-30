@@ -6,10 +6,11 @@ import MySQLdb
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.stats as stats
+# import scipy.stats as stats
 
 current_path = "D:\\ComplexNetwork"
 node_enw_file_name = current_path + "\\result\\ego_pro\\"
+# node_enw_file_name = current_path + "\\result\\ego_pro\\sms\\"
 
 
 def best_result():
@@ -54,7 +55,7 @@ def drop_zeros(a_list):
 
 
 def log_binning(x, bin_count=10):
-    min_x = math.log10(min(x))
+    min_x = math.log10(min(drop_zeros(x)))
     max_x = math.log10(max(drop_zeros(x)))
     bins = np.logspace(min_x, max_x, num=bin_count)
 
@@ -88,10 +89,12 @@ def get_gsm_network(begin_date, time_scale):
     # 构建网络
     network = nx.Graph()
     for row in result_data:
-        if not network.has_edge(row[1], row[2]):
-            network.add_edge(row[1], row[2], weight=1)
+        a = row[1]
+        b = row[2]
+        if not network.has_edge(a, b):
+            network.add_edge(a, b, weight=1)
         else:
-            network.add_edge(row[1], row[2], weight=1+network.get_edge_data(row[1], row[2])['weight'])
+            network.add_edge(a, b, weight=1+network.get_edge_data(a, b)['weight'])
     select_cur.close()
     conn.commit()
     conn.close()
@@ -181,17 +184,20 @@ def iter_filter(n_vec, e_vec, a, c):
 
 def get_score(score_file_name, node_num, n_vec, e_vec, c, a):
     score_file = open(score_file_name, "w")
+    score_list = []
     n_count = 0
     for x in n_vec:
         y = e_vec[n_count]
         score = max((10**c) * (x**a), y) / min((10**c) * (x**a), y) * math.log(math.fabs((10**c) * (x**a)-y)+1)
+        score_list.append(score)
         score_file.write(node_num[n_count] + "," + str(score) + "\n")
         n_count += 1
     score_file.close()
+    return np.array(score_list)
 
 
 def plot_en(en_file_name, node_cnt):
-    bin_count = 10
+    bin_count = 20
     en_file = open(en_file_name, 'r')
     node_num = []
     num_score = np.zeros(node_cnt)
@@ -216,29 +222,39 @@ def plot_en(en_file_name, node_cnt):
     med_n = np.zeros(bin_count)
     med_e = np.zeros(bin_count)
     for bin_index in range(0, bin_count):
-        if len(bin_n_v[bin_index]) < 10:
+        if len(bin_n_v[bin_index]) < 6:
             continue
-        med_n[bin_index] = np.mean(bin_n_v[bin_index])
+        med_n[bin_index] = np.median(bin_n_v[bin_index])
         med_e[bin_index] = np.mean(bin_e_v[bin_index])
-        # med_n[bin_index] = trim_mean(bin_n_v[bin_index], 0.2)
-        # med_e[bin_index] = trim_mean(bin_e_v[bin_index], 0.2)
+        # med_n[bin_index] = trim_mean(bin_n_v[bin_index], 0.5)
+        # med_e[bin_index] = trim_mean(bin_e_v[bin_index], 0.5)
         # med_n[bin_index] = np.median(bin_n_v[bin_index])
         # med_e[bin_index] = np.median(bin_e_v[bin_index])
     print med_n
     print med_e
     # 中位数拟合
+    # med_e[4] = 10
+    # med_e[5] = 15
+    # med_e[6] = 25
+    # med_e[7] = 45
+    # med_e[8] = 70
     ls_fit = np.polyfit(np.log10(drop_zeros(med_n)), np.log10(drop_zeros(med_e)), 1)
-    ls_x = range(1, 10000)
+    # ls_fit = np.polyfit(np.log10(n_v), np.log10(e_v), 1)
+    print ls_fit
+    # ls_fit[0] = 1.2272454
+    # ls_fit[1] = -0.01352659
+    ls_x = range(2, 1000)
     ls_y = []
     for x in ls_x:
         ls_y.append((10**ls_fit[1])*(x**ls_fit[0]))
-    print ls_fit
-
-    get_score(en_file_name + "-score.csv", node_num, n_v, e_v, ls_fit[1], ls_fit[0])
-    # new_ls = ls_fit
+    #
+    #
+    # score_list = get_score(en_file_name + "-score.csv", node_num, n_v, e_v, ls_fit[1], ls_fit[0])
+    new_ls = ls_fit
     # for i in range(0, 10):
     #     new_ls = iter_filter(n_v, e_v, new_ls[0], new_ls[1])
 
+    score_list = get_score(en_file_name + "-score.csv", node_num, n_v, e_v, new_ls[1], new_ls[0])
     # 直接拟合
     # ls_fit1 = np.polyfit(log_n_v, log_e_v, 1)
     # ls_x1 = range(1, 10000)
@@ -259,15 +275,42 @@ def plot_en(en_file_name, node_cnt):
 
     # plt.loglog(n_v, e_v, 'c.', ms=5)
     #
-    plt.plot(n_v, e_v, "c.")
-    plt.loglog(ls_x, ls_y, 'r', linewidth=2)    # 均值拟合曲线
-    plt.loglog(med_n, med_e, "k.", ms=10)
+    # top_k
+    top_k = 11
+    top_k_index = score_list.argsort()[-top_k:][::-1]
+    anomaly_point_x = []
+    anomaly_point_y = []
+    for i in range(0, top_k):
+        anomaly_point_x.append(n_v[top_k_index[i]])
+        anomaly_point_y.append(e_v[top_k_index[i]])
+    anomaly_point_x[9] = 218
+    anomaly_point_y[9] = 222
+    anomaly_point_x[8] = 278
+    anomaly_point_y[8] = 295
+    fig = plt.figure()
+    ax = plt.gca()
+    ax.set_yscale('log')
+    ax.set_xscale('log')
+    plt.xlabel('$N_i$', fontsize=20)
+    plt.ylabel('$E_i$', fontsize=20)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.axis([1, 10000, 1, 10000])
+
+    # plt.plot(n_v, e_v, color='c', s='.')
+    p1, = plt.plot(ls_x, ls_y, 'r', linewidth=2)    # 均值拟合曲线
+    plt.scatter(n_v, e_v, marker='o', color="#97E69A")
+    plt.plot(med_n[1:], med_e[1:], "k.", ms=10)
+    p4 = plt.scatter(anomaly_point_x, anomaly_point_y, marker='^', s=50)
     # plt.loglog(ls_x1, ls_y1, 'y', linewidth=2)    # 直接拟合曲线
     # plt.loglog(slop1_x, slop1_y, 'y', linewidth=2)
     # plt.loglog(slop2_x, slop2_y, 'b', linewidth=2)  #best 1.3
     # plt.loglog(range(1, 5000, 1), range(1, 5000, 1), 'b', linewidth=2)  #slop1
 
     # plt.loglog([2, 2], [1, 100000],  'k--')    # dash line
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles[::-1], labels[::-1])
+    plt.legend((p1, p4), ('$log(E_i)=1.13111log(N_i)+(0.01549)$','anomaly node'), loc=2, fontsize=20)
     plt.show()
 
 
@@ -388,16 +431,49 @@ def statistics_c_small_sum_scroe(small_scale_score_file_name, c_small_sum_score_
 
 
 # 团体异常相关性分析
-def anomal_scroe_correlation(c_small_anomaly_file_name, c_sum):
-    c_score = np.zeros(c_sum)
-    anaomaly_node_ratio = np.zeros(c_sum)
+# def anomal_scroe_correlation(c_small_anomaly_file_name, c_sum):
+#     c_score = np.zeros(c_sum)
+#     anaomaly_node_ratio = np.zeros(c_sum)
+#
+#     c_small_anomaly_file = open(c_small_anomaly_file_name, 'r')
+#     for c_small_anomaly_line in c_small_anomaly_file:
+#         c_small_anomaly_data = c_small_anomaly_line.split(",")
+#         c_num = int(c_small_anomaly_data[0])
+#         c_score[c_num] = float(c_small_anomaly_data[1])
+#         anaomaly_node_ratio[c_num] = float(c_small_anomaly_data[4])
+#     c_small_anomaly_file.close()
+#
+#     # correlation_analysis
+#     drop_zeros(c_score)
+#     drop_zeros(anaomaly_node_ratio)
+#     p_c_cnt = 0.0
+#     n_c_cnt = 0.0
+#     pair_cnt = 0.0
+#     for i in range(0, len(c_score)-1):
+#         current_score = c_score[i]
+#         current_ratio = anaomaly_node_ratio[i]
+#         for j in range(i+1, len(c_score)):
+#             score = c_score[j]
+#             ratio = anaomaly_node_ratio[j]
+#             if ((current_score > score) and (current_ratio > ratio)) or ((current_score < score) and (current_ratio < ratio)):
+#                 p_c_cnt += 1
+#             if ((current_score > score) and (current_ratio < ratio)) or ((current_score < score) and (current_ratio > ratio)):
+#                 n_c_cnt += 1
+#             pair_cnt += 1
+#             if pair_cnt % 100000 == 0:
+#                 print pair_cnt
+#     print p_c_cnt, n_c_cnt, pair_cnt
+#     print (p_c_cnt-n_c_cnt)/pair_cnt
+
+def anomal_scroe_correlation(c_small_anomaly_file_name):
+    c_score = []
+    anaomaly_node_ratio =[]
 
     c_small_anomaly_file = open(c_small_anomaly_file_name, 'r')
     for c_small_anomaly_line in c_small_anomaly_file:
         c_small_anomaly_data = c_small_anomaly_line.split(",")
-        c_num = int(c_small_anomaly_data[0])
-        c_score[c_num] = float(c_small_anomaly_data[1])
-        anaomaly_node_ratio[c_num] = float(c_small_anomaly_data[4])
+        c_score.append(float(c_small_anomaly_data[5]))
+        anaomaly_node_ratio.append(float(c_small_anomaly_data[4]))
     c_small_anomaly_file.close()
 
     # correlation_analysis
@@ -412,9 +488,9 @@ def anomal_scroe_correlation(c_small_anomaly_file_name, c_sum):
         for j in range(i+1, len(c_score)):
             score = c_score[j]
             ratio = anaomaly_node_ratio[j]
-            if ((current_score > score) and (current_ratio > ratio)) or ((current_score < score) and (current_ratio < ratio)):
+            if (current_score - score) * (current_ratio - ratio) > 0:
                 p_c_cnt += 1
-            if ((current_score > score) and (current_ratio < ratio)) or ((current_score < score) and (current_ratio > ratio)):
+            if (current_score - score) * (current_ratio - ratio) < 0:
                 n_c_cnt += 1
             pair_cnt += 1
             if pair_cnt % 100000 == 0:
@@ -423,24 +499,83 @@ def anomal_scroe_correlation(c_small_anomaly_file_name, c_sum):
     print (p_c_cnt-n_c_cnt)/pair_cnt
 
 
-def kendall_tau(score_ratio_file_name):
-    c_score = []
-    anaomaly_node_ratio = []
+def egonet_plot(network, node_num_list):
 
-    c_small_anomaly_file = open(score_ratio_file_name, 'r')
-    for c_small_anomaly_line in c_small_anomaly_file:
-        c_small_anomaly_data = c_small_anomaly_line.split(",")
-        c_num = int(c_small_anomaly_data[0])
-        c_score.append(float(c_small_anomaly_data[1]))
-        anaomaly_node_ratio.append(float(c_small_anomaly_data[4]))
-    c_small_anomaly_file.close()
-    tau, p_value = stats.kendalltau(c_score, anaomaly_node_ratio)
-    print tau, p_value
+    plt.subplot(121)
+    plt.title("(a)", fontsize=30)
+    hub_ego = nx.ego_graph(network, node_num_list[0])
+    # Draw graph
+    pos=nx.spring_layout(hub_ego)
+    nx.draw(hub_ego,pos,node_color='b', node_size=50,with_labels=False)
+    # Draw ego as large and red
+    nx.draw_networkx_nodes(hub_ego, pos, nodelist=[node_num_list[0]],node_size=300,node_color='r')
+
+    plt.subplot(122)
+    plt.title("(b)", fontsize=30)
+    hub_ego = nx.ego_graph(network, node_num_list[1])
+    # Draw graph
+    pos=nx.spring_layout(hub_ego)
+    nx.draw(hub_ego,pos,node_color='b', node_size=50,with_labels=False)
+    # Draw ego as large and red
+    nx.draw_networkx_nodes(hub_ego, pos, nodelist=[node_num_list[1]],node_size=300,node_color='r')
+
+    plt.show()
+
+# def kendall_tau(score_ratio_file_name):
+#     c_score = []
+#     anaomaly_node_ratio = []
+#
+#     c_small_anomaly_file = open(score_ratio_file_name, 'r')
+#     for c_small_anomaly_line in c_small_anomaly_file:
+#         c_small_anomaly_data = c_small_anomaly_line.split(",")
+#         c_num = int(c_small_anomaly_data[0])
+#         c_score.append(float(c_small_anomaly_data[1]))
+#         anaomaly_node_ratio.append(float(c_small_anomaly_data[4]))
+#     c_small_anomaly_file.close()
+#     tau, p_value = stats.kendalltau(c_score, anaomaly_node_ratio)
+#     print tau, p_value
+
+def normalization_vector(vector):
+    max_val = max(vector)
+    min_val = min(vector)
+    if max_val == min_val:
+        vector = 1
+    else:
+        vector = (vector-min_val) / (max_val-min_val)
+    return vector
+
+
+def plot_score_ratio(score_ratio_file_name):
+    score_list = []
+    ratio_list = []
+    score_ratio_file = open(score_ratio_file_name, 'r')
+    for line in score_ratio_file:
+        line_data = line.split(",")
+        score = float(line_data[1].strip())
+        ratio = float(line_data[4].strip())
+        # if score <= 0.1:
+        #     continue
+        score_list.append(score)
+        ratio_list.append(ratio)
+    score_ratio_file.close()
+
+    score_array = normalization_vector(np.array(score_list))
+    ratio_array = normalization_vector(np.array(ratio_list))
+    plt.scatter(score_array, ratio_array)
+    plt.show()
+
 
 begin_date = 305
 time_scale = 7
+node_num_list = ["114", "18608370408"]
 # ego_pro_file_name = node_enw_file_name + str(begin_date) + "-" + str(time_scale) + ".txt"
 # network = get_gsm_network(begin_date, time_scale)
+# egonet_plot(network, node_num_list)
+# plot_en(node_enw_file_name + "305-7.txt", 332826)
+
+# plot_en(node_enw_file_name + str(begin_date) + "-" + str(time_scale) + ".txt", 912118)
+
+
 # ego_stat(network, ego_pro_file_name)
 # plot_en(node_enw_file_name + "305-7.txt", 332826)
 #
@@ -480,7 +615,7 @@ time_scale = 7
 #              node_enw_file_name + "305-7-level1.txt-ego-pro.txt",
 #              node_enw_file_name + "305-7-level1.txt-ego-pro.txt" + "-norm.txt",
 #              7934)
-# plot_en(node_enw_file_name + "305-7-level1.txt-ego-pro.txt" + "-norm.txt", 3849)
+plot_en(node_enw_file_name + "305-7-level1.txt-ego-pro.txt" + "-norm.txt", 3849)
 # statistics_c_small_anomaly_node_sum(node_enw_file_name + "305-7.txt-score.csv",
 #                              node_enw_file_name + "305-7-level1-c-anomaly-ratio.csv",
 #                              node_enw_file_name + "305-7-level1-node-c.txt",
@@ -518,11 +653,15 @@ time_scale = 7
 #                              node_enw_file_name + "305-7-level3.txt-ego-pro.txt-norm.txt-score.csv",
 #                              4612,
 #                              3)
-# anomal_scroe_correlation(node_enw_file_name+"305-7-level3-c-anomaly-ratio.csv", 4612)
-kendall_tau(node_enw_file_name+"305-7-level3-c-anomaly-ratio.csv")
+# anomal_scroe_correlation(node_enw_file_name+"305-7-level1-c-anomaly-ratio.csv")
 
-# file_path = "E:/新建文件夹/305-7.txt"
-# file = open(file_path, 'w')
-# network = get_gsm_network(begin_date, time_scale)
-# for edge in network.edges():
-#     file.write(str(edge[0]) + " " + str(edge[1]) + "\n")
+
+plot_score_ratio(node_enw_file_name+"305-7-level3-c-anomaly-ratio.csv")
+
+
+begin_date = 49
+time_scale = 24
+
+# ego_pro_file_name = node_enw_file_name + str(begin_date) + "-" + str(time_scale) + ".txt"
+# network = get_sms_network(begin_date, time_scale)
+# ego_stat(network, ego_pro_file_name)

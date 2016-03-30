@@ -9,8 +9,7 @@ import MySQLdb
 
 current_path = "D:\\ComplexNetwork"
 GG = nx.Graph()
-# GG.add_weighted_edges_from([ (1,2,4), (1,2,1), (2,3,2),(3,2,1) ,(1,4,2), (4,3,1), (1,3,1), (2,1,1), (5,6,1)])
-GG.add_weighted_edges_from([ ('2','2',1),('1','2',4), ('1','4',4),('1','3',1), ('2','3',2),('3','4',1) ,('3','5',2) ,('2','6',2) ,('5','6',2), ('1','1',4), ('1','1',4)])
+# GG.add_weighted_edges_from([ (1,2,4), (1,4,4),(1,3,1), (2,3,2)])
 # GG.add_weighted_edges_from([ (1,2,4)])
 # print float(sum(GG.degree(weight='weight').values()))/GG.number_of_nodes()
 # print nx.average_clustering(GG)
@@ -19,16 +18,16 @@ GG.add_weighted_edges_from([ ('2','2',1),('1','2',4), ('1','4',4),('1','3',1), (
 # print nx.degree_assortativity_coefficient(GG)
 # print GG.number_of_edges()
 # print 1,2
-n = GG.neighbors('1')
-n.append('1')
-ego = nx.ego_graph(GG, '1' ,radius=1)
-
-print ego.edges()
-print ego.number_of_selfloops()
-print ego.number_of_nodes()
-print ego.number_of_edges()
-w = sum(ego.degree(weight='weight').values()) / 2
-print w
+# n = GG.neighbors('1')
+# n.append('1')
+# ego = nx.ego_graph(GG, '1' ,radius=1)
+#
+# print ego.edges()
+# print ego.number_of_selfloops()
+# print ego.number_of_nodes()
+# print ego.number_of_edges()
+# w = sum(ego.degree(weight='weight').values()) / 2
+# print w
 # print H.edges()
 # print H.number_of_edges()
 # print H.number_of_nodes()
@@ -172,3 +171,36 @@ def aba_gsm_txt2db(file_name):
 # x = range(len(degree))                             #生成x轴序列，从1到最大度
 # plt.loglog(x,degree,"bo",linewidth=2)           #在双对数坐标轴上绘制度分布曲线
 # plt.show()                                                          #显示图表
+
+
+
+
+    # Create a BA model graph
+    # n=5
+    # m=2
+
+GG.add_weighted_edges_from([ (1,2,4), (1,4,4),(1,3,1), (2,3,2)])
+G = GG
+plt.subplot(221)
+plt.title("(a)")
+nx.draw(G, node_color='#A0CBE2',with_labels=True,node_size=1200)
+# G=nx.generators.barabasi_albert_graph(n,m)
+# find node with largest degree
+node_and_degree=G.degree()
+plt.subplot(223)
+plt.title("(b)")
+# Create ego graph of main hub
+hub_ego=nx.ego_graph(G,1)
+pos=nx.spring_layout(hub_ego)
+nx.draw(hub_ego,pos,node_color='#A0CBE2',node_size=600,with_labels=True)
+nx.draw_networkx_nodes(hub_ego,pos,nodelist=[1],node_size=1000,node_color='r', with_labels=True)
+
+plt.subplot(224)
+plt.title("(c)")
+# Create ego graph of main hub
+hub_ego=nx.ego_graph(G,2)
+pos=nx.spring_layout(hub_ego)
+nx.draw(hub_ego,pos,node_color='#A0CBE2',node_size=600,with_labels=True)
+nx.draw_networkx_nodes(hub_ego,pos,nodelist=[2],node_size=1000,node_color='r', with_labels=True)
+
+plt.show()
