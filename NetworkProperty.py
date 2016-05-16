@@ -174,10 +174,10 @@ def sms_degree(sms_pro_file_name, pro_index):
     plt.plot(x, degree_list, "ro")
     plt.show()
 
+sms_data = "E:/data/3network_pro/sms/1.txt"
+sms_degree(sms_data, 3)
 # sms_data = "E:/data/3network_pro/sms/1.txt"
-# sms_degree(sms_data, 3)
-sms_data = "E:/data/3network_pro/gsm/1.txt"
-sms_degree(sms_data, 2)
+# sms_degree(sms_data, 2)
 
 # get_gsm_network_property(1)
 # 40 49 50 60 70

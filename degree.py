@@ -55,7 +55,7 @@ def pic(c,n):
     plt.title('Degree Distribution')
     plt.ylabel('Probability')
     plt.xlabel('Degree')
-
+    return x, y
 
 
 plt.subplot(221)

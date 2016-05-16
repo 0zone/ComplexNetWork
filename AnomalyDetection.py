@@ -17,7 +17,7 @@ import os
 # 30d last 17
 aba_gsm_days = 530
 feature_sum = 5
-plot_style = ['g', 'b', 'r', 'ro', 'bs', 'c^', 'gp', 'mh', 'y2', 'k.']   # 点
+plot_style = ['g', 'b:', 'r--', 'ro', 'bs', 'c^', 'gp', 'mh', 'y2', 'k.']   # 点
 conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="network", charset="utf8")
 current_path = "D:\\ComplexNetwork"
 node_file_name = current_path + "\\result\\node_score\\gsm_7_55anomaly.txt"
@@ -236,7 +236,7 @@ def get_aba_gsm_node_feature(time_scale, num, slice_size):
 #     #     print s
 #     return feature_num, similar_score
 
-# plot
+
 def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, decay, threshold):
     similar_score = np.zeros((slice_size))
     x_axis = range(0, 530, time_scale)
@@ -294,18 +294,18 @@ def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, dec
     # plt.xlabel('time(days)')
     # plt.ylabel('features')
     # plt.legend(loc=2)
-    # #
-    # #
+    # # #
+    # # #
     z1 = np.polyfit(x_axis, similar_score, 3)#用3次多项式拟合
     p1 = np.poly1d(z1)
     yvals = p1(x_axis)
-    # #
+    # # #
     # plt.subplot(212)
     # plt.title("(b)")
     # plt.plot(x_axis, similar_score, plot_style[3])
     # plt.axis([0, 600, 0, 1.0])
     # plt.plot(x_axis, similar_score, plot_style[3], label="anomaly_score")
-    # plt.plot(x_axis, yvals, 'b', label="poly fit")
+    # # plt.plot(x_axis, yvals, 'b', label="poly fit")
     # plt.xlabel('time(days)')
     # plt.ylabel('score')
     # plt.legend(loc=2)
@@ -314,6 +314,83 @@ def aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, dec
     #     similar_score[slice_size - 1] = 0.67
     return x_axis, normalization_feature, similar_score, yvals
 
+
+def plot_aba_gsm_node_anomaly_detection(time_scale, num, slice_size, window_size, decay, threshold):
+    similar_score = np.zeros((slice_size))
+    x_axis = range(0, 530, time_scale)
+    # x_axis = range(0, slice_size)
+    ab_line = np.zeros((slice_size+2)) + 0.25
+    feature_num, node_feature = get_aba_gsm_node_feature(time_scale, num, slice_size)
+
+    # plt.subplot(211)
+    # plt.title("(a)",fontsize=20)
+    # plt.plot(x_axis, node_feature[:, 1], plot_style[1], label="in-degree")
+    # plt.xlabel('time(days)',fontsize=20)
+    # plt.ylabel('in-degree',fontsize=20)
+    # # plt.legend(loc=2)
+
+    normalization_feature = normalization_matrix(node_feature)
+
+
+    # plt.subplot(212)
+    # plt.title("(b)",fontsize=20)
+    # plt.plot(x_axis, normalization_feature[:, 1], plot_style[1], label="normalization in-degree")
+    # plt.xlabel('time(days)',fontsize=20)
+    # plt.ylabel('normalization in-degree',fontsize=20)
+    # # plt.legend(loc=2)
+    # plt.show()
+
+    begin_date = 0
+    end_date = normalization_feature.shape[0]
+    anomaly_num = 0
+    for cur_date in range(begin_date, end_date):
+        cur_feature = normalization_feature[cur_date]
+
+        if cur_date == begin_date:
+            continue
+        similar = 0.0
+        windows_cnt = 0
+        for i in range(1, min(cur_date + 1, window_size + 1)):
+            # similar += os_distance(normalization_feature[cur_date - i], cur_feature)
+            similar += os_distance(normalization_feature[cur_date - i], cur_feature) * pow(decay, i)
+            # similar += cos_similar(normalization_feature[cur_date - i], cur_feature) * pow(decay, i)
+            windows_cnt += 1
+        similar /= windows_cnt
+        if similar < 0.000001:
+            similar = 0.0
+        if similar > 1.0:
+            similar = 0.958401
+        similar_score[cur_date] = similar
+    anomaly_ratio = float(anomaly_num) / slice_size
+
+    # plot
+    plt.subplot(211)
+    plt.title("(a)")
+    plt.plot(x_axis, normalization_feature[:, 0], plot_style[0], label="out-degree")
+    plt.plot(x_axis, normalization_feature[:, 1], plot_style[1], label="in-degree")
+    plt.plot(x_axis, normalization_feature[:, 3], plot_style[2], label="cluster coefficient")
+    plt.xlabel('time(days)')
+    plt.ylabel('features')
+    plt.legend(loc=2)
+    # #
+    # #
+    z1 = np.polyfit(x_axis, similar_score, 3)#用3次多项式拟合
+    p1 = np.poly1d(z1)
+    yvals = p1(x_axis)
+    # #
+    plt.subplot(212)
+    plt.title("(b)")
+    plt.plot(x_axis, similar_score, plot_style[3])
+    plt.axis([0, 600, 0, 1.0])
+    plt.plot(x_axis, similar_score, plot_style[3], label="anomaly_score")
+    # plt.plot(x_axis, yvals, 'b', label="poly fit")
+    plt.xlabel('time(days)')
+    plt.ylabel('score')
+    plt.legend(loc=2)
+    plt.show()
+    # if time_scale == 28:
+    #     similar_score[slice_size - 1] = 0.67
+    return x_axis, normalization_feature, similar_score, yvals
 
 def get_node_anomaly_score(time_scale, slice_size, begin_line):
     num_file_name = current_path + "\\result\\num.txt"
@@ -431,7 +508,7 @@ def avg_vs_anamoly(num, time_scale, feature_index):
     print avg_feature
     x_axis = range(0, 530, time_scale)
     plt.plot(x_axis, num_feature, plot_style[0])
-    plt.plot(x_axis, avg_feature, "r-.", lw=3)
+    plt.plot(x_axis, avg_feature, "r-.", lw=2)
 
 
 def plot_avg_vs_num(num):
@@ -471,6 +548,7 @@ def plot_avg_vs_num(num):
 
 def plot_pic(num):
     xticks_font_size = 25
+    lw_size = 2.3
     x_axis1, normalization_feature1, similar_score1, yvals1 = aba_gsm_node_anomaly_detection(1, num, scale_dict[1], 1, 0.7, 0.8)
     for s in similar_score1:
         print s
@@ -478,13 +556,15 @@ def plot_pic(num):
     plt.subplot(241)
     plt.title("(a)", fontsize=25)
     plt.plot(x_axis1, normalization_feature1[:, 0], plot_style[0], label="out-degree")
-    plt.plot(x_axis1, normalization_feature1[:, 1], plot_style[1], label="in-degree")
+    plt.plot(x_axis1, normalization_feature1[:, 1], plot_style[1], lw=lw_size, label="in-degree")
     plt.plot(x_axis1, normalization_feature1[:, 3], plot_style[2], label="cluster coefficient")
+
+
     # plt.xlabel('time(days)')
     plt.ylabel('features', fontsize=25)
     plt.xticks(np.arange(0, 700, 200), fontsize=xticks_font_size)
     plt.yticks(fontsize=xticks_font_size)
-    plt.legend(loc=0, framealpha=0.4)
+    plt.legend(loc=1, framealpha=0.4)
     leg = plt.gca().get_legend()
     ltext = leg.get_texts()
     plt.setp(ltext, fontsize='small')
@@ -507,7 +587,7 @@ def plot_pic(num):
     plt.subplot(242)
     plt.title("(b)", fontsize=25)
     plt.plot(x_axis2, normalization_feature2[:, 0], plot_style[0], label="out-degree")
-    plt.plot(x_axis2, normalization_feature2[:, 1], plot_style[1], label="in-degree")
+    plt.plot(x_axis2, normalization_feature2[:, 1], plot_style[1], lw=lw_size, label="in-degree")
     plt.plot(x_axis2, normalization_feature2[:, 3], plot_style[2], label="cluster coefficient")
     plt.xticks(np.arange(0, 700, 200), fontsize=xticks_font_size)
     plt.yticks(fontsize=xticks_font_size)
@@ -535,7 +615,7 @@ def plot_pic(num):
     plt.subplot(243)
     plt.title("(c)",fontsize=25)
     plt.plot(x_axis3, normalization_feature3[:, 0], plot_style[0], label="out-degree")
-    plt.plot(x_axis3, normalization_feature3[:, 1], plot_style[1], label="in-degree")
+    plt.plot(x_axis3, normalization_feature3[:, 1], plot_style[1], lw=lw_size, label="in-degree")
     plt.plot(x_axis3, normalization_feature3[:, 3], plot_style[2], label="cluster coefficient")
     plt.xticks(np.arange(0, 700, 200), fontsize=xticks_font_size)
     plt.yticks(fontsize=xticks_font_size)
@@ -563,7 +643,7 @@ def plot_pic(num):
     plt.subplot(244)
     plt.title("(d)",fontsize=25)
     plt.plot(x_axis4, normalization_feature4[:, 0], plot_style[0], label="out-degree")
-    plt.plot(x_axis4, normalization_feature4[:, 1], plot_style[1], label="in-degree")
+    plt.plot(x_axis4, normalization_feature4[:, 1], plot_style[1], lw=lw_size, label="in-degree")
     plt.plot(x_axis4, normalization_feature4[:, 3], plot_style[2], label="cluster coefficient")
     plt.xticks(np.arange(0, 700, 200), fontsize=xticks_font_size)
     plt.yticks(fontsize=xticks_font_size)
@@ -586,6 +666,25 @@ def plot_pic(num):
     # plt.legend(loc=2)
 
     plt.show()
+
+
+def num_anomaly(num):
+    xticks_font_size = 25
+    x_axis1, normalization_feature1, similar_score1, yvals1 = aba_gsm_node_anomaly_detection(1, num, scale_dict[1], 1, 0.7, 0.8)
+    for s in similar_score1:
+        print s
+    # plot
+    plt.title("(a)", fontsize=25)
+    plt.plot(x_axis1, normalization_feature1[:, 0], plot_style[0], label="out-degree")
+    plt.plot(x_axis1, normalization_feature1[:, 1], plot_style[1], label="in-degree")
+    plt.plot(x_axis1, normalization_feature1[:, 3], plot_style[2], label="cluster coefficient")
+
+# plot_avg_vs_num("13219842980")
+
+# num_anomaly("13219842980")
+# plot_aba_gsm_node_anomaly_detection(1, "13056461288", scale_dict[1], 1, 0.7, 0.8)
+# plot_pic("13219842980")
+# plot_pic("13219840567")
 plot_pic("13219842980")
 # 13219842980
 # 13219840567
